@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANDC Scheduling Algorithm Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0b2545;
+      --navy-deep: #071a33;
+      --burgundy: #7a1a2e;
+      --gold: #c9a227;
+      --gold-light: #e6c860;
+      --parchment: #f6f2e8;
+      --ivory: #fffdf6;
+      --ink: #1c1f24;
+      --slate: #4a5568;
+      --hairline: #d8cfb8;
+      --radius: 8px;
+      --shadow-soft: 0 4px 14px rgba(11, 37, 69, 0.12);
+      --shadow-lift: 0 10px 24px rgba(11, 37, 69, 0.18);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: var(--parchment);
+      background-image:
+        linear-gradient(180deg, rgba(11,37,69,0.04) 0%, rgba(11,37,69,0) 220px),
+        repeating-linear-gradient(0deg, rgba(11,37,69,0.015) 0px, rgba(11,37,69,0.015) 1px, transparent 1px, transparent 3px);
+      color: var(--ink);
+      font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 0 0 3rem 0;
+    }
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+    }
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'Playfair Display', Georgia, serif;
+      color: var(--navy);
+      letter-spacing: 0.2px;
+    }
+    h3 {
+      font-size: 2.2rem;
+      margin-bottom: 0;
+    }
+    label {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-top: 1.25rem;
+      color: var(--navy);
+      display: block;
+      text-align: left;
+    }
+
+    /* ---- Letterhead header band ---- */
+    .typewriter-container {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
+      padding: 2.75rem 1rem 2.25rem 1rem;
+      border-bottom: 4px solid var(--gold);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      margin-bottom: 2.5rem;
+    }
+    .typewriter {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      background: linear-gradient(90deg, var(--gold-light), var(--gold) 55%, #a97f18);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      overflow: hidden;
+      white-space: nowrap;
+      width: 0;
+      display: inline-block;
+      border-right: 2px solid var(--gold-light);
+      animation: typing 2s steps(40, end) forwards, blink 0.75s step-end 6;
+    }
+    @keyframes typing { from {width: 0} to {width: 100%} }
+    @keyframes blink { 0%, 50% {border-color: rgba(230,200,96,0.8);} 100% {border-color: transparent;} }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 2.5rem;
+      padding: 0 1.5rem;
+    }
+
+    .card {
+      background: var(--ivory);
+      color: var(--ink);
+      padding: 2rem;
+      border-radius: var(--radius);
+      width: 300px;
+      margin: 1rem;
+      border: 1px solid var(--hairline);
+      border-top: 4px solid var(--navy);
+      box-shadow: var(--shadow-soft);
+      text-align: left;
+      transition: box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .card:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+    .card h2 { text-align: center; margin-bottom: 1.25rem; }
+
+    .process-card {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--ivory);
+      color: var(--ink);
+      padding: 2rem;
+      border-radius: var(--radius);
+      width: 310px;
+      margin: 1rem;
+      border: 1px solid var(--hairline);
+      border-top: 4px solid var(--burgundy);
+      box-shadow: var(--shadow-soft);
+      display: none;
+    }
+    .process-card h2 { width: 100%; text-align: center; }
+
+    select, button, input[type="text"], input[type="number"], input[type="color"] {
+      margin-top: 0.4rem;
+      margin-bottom: 1rem;
+      padding: 0.6rem 1rem;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--hairline);
+      cursor: pointer;
+      width: 90%;
+      color: var(--ink);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.25);
+    }
+    select { background-color: #fff; color: var(--ink); border: 1px solid var(--hairline); }
+    input[type="color"] { padding: 0.3rem; height: 44px; }
+
+    button {
+      background: var(--navy);
+      color: var(--ivory);
+      margin: 0.35rem 0.35rem 0.35rem 0;
+      margin-top: 0.75rem;
+      border: 1px solid var(--navy);
+      letter-spacing: 0.3px;
+    }
+    button:hover {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--navy-deep);
+      box-shadow: 0 4px 10px rgba(201, 162, 39, 0.35);
+      transform: translateY(-1px);
+    }
+    button:active { transform: translateY(0); }
+    button.clear { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+    button.clear:hover { background: var(--navy); color: var(--ivory); }
+
+    .process-list {
+      text-align: left;
+      margin-top: 0.5rem;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Source Sans 3', sans-serif;
+      width: 100%;
+    }
+    .process-item {
+      margin: 0.4rem 0;
+      padding: 0.4rem 0.6rem;
+      border-radius: 5px;
+      background: rgba(11,37,69,0.04);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(7, 26, 51, 0.72);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: var(--ivory);
+      padding: 2.75rem;
+      border-radius: 10px;
+      width: 350px;
+      position: relative;
+      border-top: 5px solid var(--gold);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+      text-align: left;
+    }
+    .modal-content button.close {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      font-size: 26px;
+      font-style: normal;
+      color: var(--navy);
+      cursor: pointer;
+      width: auto;
+      padding: 0;
+      margin: 0;
+    }
+    .modal-content button.close:hover { color: var(--burgundy); background: transparent; box-shadow: none; transform: none; }
+
+    .flex-column {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .radio-group {
+      display: flex;
+      gap: 24px;
+      margin-top: 0.5rem;
+    }
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--ink);
+      margin-top: 0;
+    }
+    #radioOptions {
+      display: none;
+      margin-top: -0.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-table {
+      margin: 2rem auto;
+      width: 90%;
+      border-collapse: collapse;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--ivory);
+      box-shadow: var(--shadow-soft);
+      font-family: 'Source Sans 3', sans-serif;
+    }
+    .result-table th, .result-table td {
+      padding: 0.9rem;
+      font-size: 15px;
+      font-weight: 600;
+      border: 1px solid var(--hairline);
+      text-align: center;
+      background: var(--ivory);
+      color: var(--ink);
+    }
+    .result-table th {
+      background: var(--navy);
+      color: var(--ivory);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .result-table tr:last-child td {
+      background: #f3e7c9;
+      font-weight: 700;
+      color: var(--navy-deep);
+    }
+
+    .metrics-box {
+      margin: 2rem auto;
+      background: var(--ivory);
+      padding: 1.5rem 2.25rem;
+      width: fit-content;
+      border-radius: var(--radius);
+      border-left: 5px solid var(--burgundy);
+      box-shadow: var(--shadow-soft);
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.9;
+      text-align: left;
+    }
+    .metrics-box p strong { color: var(--navy); }
+
+    /* ----- PROCESS STATE ANIMATION ----- */
+    .simulator-container {
+      margin: 3rem auto 0 auto;
+      padding: 2.25rem 1.75rem 2.5rem 1.75rem;
+      max-width: 1000px;
+      background: linear-gradient(180deg, #eef1e9 0%, #f6f2e8 55%);
+      border: 1px solid rgba(11, 37, 69, 0.12);
+      border-top: 4px solid var(--gold);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 3px 12px rgba(11, 37, 69, 0.07);
+      display: none;
+      position: relative;
+    }
+    .simulator-container h2 {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .sim-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      background: transparent;
+      padding: 14px 24px;
+      border-radius: var(--radius);
+      border: none;
+      box-shadow: none;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .sim-controls button {
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-top: 0;
+      width: auto;
+      border-radius: 7px;
+      background: var(--navy) !important;
+      color: var(--ivory) !important;
+      border: 1px solid var(--navy) !important;
+      box-shadow: 0 3px 8px rgba(11, 37, 69, 0.18);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .sim-controls button:hover {
+      transform: translateY(-1px);
+    }
+    .sim-controls button:active {
+      transform: translateY(0);
+    }
+
+    /* Play/Pause -- primary action, gold */
+    #btnPlayPause {
+      background: var(--gold) !important;
+      color: var(--navy-deep) !important;
+      border: 1px solid #a97f18 !important;
+    }
+    #btnPlayPause:hover {
+      background: var(--gold-light) !important;
+      box-shadow: 0 5px 12px rgba(201, 162, 39, 0.4);
+    }
+
+    /* Restart -- neutral, navy outline so it reads as secondary */
+    button[onclick="restartSimulation()"] {
+      background: var(--ivory) !important;
+      color: var(--navy) !important;
+      border: 1.5px solid var(--navy) !important;
+      box-shadow: none;
+    }
+    button[onclick="restartSimulation()"]:hover {
+      background: var(--navy) !important;
+      color: var(--ivory) !important;
+    }
+
+    /* Stop -- burgundy so it reads as the "leaves this state" action */
+    button[onclick="stopSimulation()"] {
+      background: var(--burgundy) !important;
+      color: var(--ivory) !important;
+      border: 1px solid #5a1220 !important;
+    }
+    button[onclick="stopSimulation()"]:hover {
+      background: #931f33 !important;
+      box-shadow: 0 5px 12px rgba(122, 26, 46, 0.35);
+    }
+    .sim-controls label {
+      display: inline;
+      margin-top: 0;
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    #speedSlider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 120px;
+      height: 5px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--navy) 0%, var(--hairline) 100%);
+      outline: none;
+      vertical-align: middle;
+      margin: 0 6px;
+    }
+    #speedSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 2px solid var(--navy);
+      cursor: pointer;
+    }
+    #speedSlider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 2px solid var(--navy);
+      cursor: pointer;
+    }
+    #speedLabel { color: var(--navy); font-weight: 700; }
+    .sim-clock {
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--navy);
+      min-width: 110px;
+      padding-left: 10px;
+      border-left: 1px solid var(--hairline);
+    }
+    .status-box {
+      margin: 0 auto 22px auto;
+      padding: 14px 18px;
+      max-width: 720px;
+      background: linear-gradient(135deg, #ffffff 0%, #f4f0e4 100%);
+      border: 1px solid rgba(11, 37, 69, 0.12);
+      border-left: 6px solid var(--navy);
+      box-shadow: 0 6px 16px rgba(11, 37, 69, 0.1);
+      border-radius: 6px;
+      font-size: 17px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--navy-deep);
+      transition: all 0.3s;
+    }
+
+    /* ----- LIVE GANTT CHART ----- */
+    .live-gantt-panel {
+      max-width: 920px;
+      margin: 0 auto 30px auto;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius);
+      padding: 1.1rem 1.35rem;
+      box-shadow: none;
+    }
+    .live-gantt-panel h4 {
+      text-align: left;
+      font-size: 12px;
+      font-family: 'Source Sans 3', sans-serif;
+      letter-spacing: 1.5px;
+      margin-bottom: 0.7rem;
+      padding-bottom: 0.4rem;
+      color: var(--navy);
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--gold);
+      display: inline-block;
+    }
+    .live-gantt-track {
+      display: flex;
+      align-items: stretch;
+      overflow-x: auto;
+      min-height: 46px;
+      border-radius: 6px;
+      background: var(--parchment);
+      border: 1px solid var(--hairline);
+      padding: 4px;
+    }
+    .live-gantt-block {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy-deep);
+      border-radius: 4px;
+      margin-right: 3px;
+      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.15);
+    }
+    .live-gantt-empty { font-size: 12px; color: #8a8375; font-style: italic; padding: 0 6px; }
+    .live-gantt-ticks {
+      display: flex;
+      overflow-x: auto;
+      margin-top: 4px;
+    }
+    .live-gantt-tick {
+      flex: 0 0 auto;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--slate);
+      margin-right: 3px;
+      font-family: 'Source Sans 3', sans-serif;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-areas:
+        ". cpu ."
+        "ready . terminated"
+        ". waiting .";
+      grid-template-columns: 1fr auto 1fr;
+      row-gap: 70px;
+      column-gap: 90px;
+      justify-items: center;
+      align-items: center;
+      position: relative;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .box {
+      border-radius: var(--radius);
+      padding: 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      background: var(--ivory);
+      box-shadow: var(--shadow-soft);
+      min-height: 100px;
+      min-width: 180px;
+      z-index: 2;
+      border: 1px solid var(--hairline);
+      transition: all 0.4s ease;
+    }
+    .box h3 {
+      margin: 0 0 10px 0;
+      padding: 6px;
+      border-radius: 5px;
+      color: var(--ivory);
+      font-size: 15px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .ready { background: #eaf0f8; grid-area: ready; }
+    .ready h3 { background: var(--navy); }
+    .cpu { background: #fdf3d9; grid-area: cpu; }
+    .cpu h3 { background: var(--gold); color: var(--navy-deep); }
+    .waiting { background: #f7e3d8; grid-area: waiting; }
+    .waiting h3 { background: #c2691a; }
+    .terminated { background: #f6dde0; grid-area: terminated; }
+    .terminated h3 { background: var(--burgundy); }
+
+    .process-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 5px;
+      min-height: 40px;
+    }
+    .anim-process {
+      width: 40px;
+      height: 30px;
+      color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+      transition: all 0.5s ease;
+    }
+    .glow { animation: glowPulse 0.8s ease infinite; }
+    @keyframes glowPulse {
+      0%   { box-shadow: 0 0 0px var(--gold); transform: scale(1); }
+      50%  { box-shadow: 0 0 18px var(--gold), 0 0 26px var(--burgundy); transform: scale(1.15); }
+      100% { box-shadow: 0 3px 6px rgba(0,0,0,0.2); transform: scale(1); }
+    }
+    svg line {
+      stroke: rgba(11, 37, 69, 0.35);
+      stroke-width: 3;
+      transition: all 0.3s ease;
+    }
+    .arrow-active {
+      stroke: var(--burgundy) !important;
+      stroke-width: 5 !important;
+      animation: arrowBlink 0.8s infinite;
+    }
+    @keyframes arrowBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .gantt-tick-container { display: flex; flex-direction: column; margin-bottom: 20px; }
+    .gantt-bar-wrapper, .tick-mark-wrapper { display: flex; }
+  </style>
+</head>
+<body>
+  <div class="typewriter-container">
+    <h3 class="typewriter">CPU SCHEDULING SIMULATOR</h3>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>Scheduling Algorithm</h2>
+      <div class="flex-row">
+        <select id="algorithm">
+          <option value="">Select</option>
+          <option value="FCFS">FCFS</option>
+          <option value="SJF">SJF</option>
+          <option value="Round Robin">Round Robin</option>
+          <option value="Priority">Priority</option>
+          <option value="Multilevel">Multilevel Queue</option>
+        </select>
+        <div class="radio-group" id="radioOptions">
+          <label><input type="radio" id="non-preemptive" name="selectType" value="non-preemptive"> Non-Preemptive</label>
+          <label><input type="radio" id="preemptive" name="selectType" value="preemptive"> Preemptive</label>
+        </div>
+      </div>
+      <div id="quantumInput" style="display:none">
+        <label>Time Quantum</label>
+        <input type="number" id="timeQuantum" value="2" min="1">
+      </div>
+      <button onclick="openModal()">Add Process</button>
+      <button onclick="submitSimulation()">Submit</button>
+      <button onclick="resetSelections()">Clear All</button>
+      <button onclick="backToHome()">Back to Home</button>
+    </div>
+
+    <div class="process-card" id="processCard">
+      <h2>Added Processes</h2>
+      <div class="process-list" id="processList"></div>
+    </div>
+
+    <!-- MERGED STATE + LIVE GANTT SIMULATOR UI -->
+    <div class="simulator-container" id="stateSimulator">
+      <h2>Live Process State Flow</h2>
+
+      <div class="sim-controls">
+        <button id="btnPlayPause" onclick="toggleSimPause()" style="background-color: #fbc02d; color:#000;">⏸ Pause</button>
+        <button onclick="restartSimulation()" style="background-color: #1976d2; color:#fff;">🔄 Restart</button>
+        <button onclick="stopSimulation()" style="background-color: #e53935;">⏹ Stop</button>
+        <div style="font-weight: bold;">
+          <label for="speedSlider">Speed: </label>
+          <input type="range" id="speedSlider" min="0.5" max="3" step="0.5" value="1" oninput="updateSpeed()">
+          <span id="speedLabel">1x</span>
+        </div>
+        <span class="sim-clock">Time: <span id="simClock">0.00</span></span>
+      </div>
+
+      <div class="status-box" id="simStatusText">
+        Waiting for simulation to start...
+      </div>
+
+      <div class="live-gantt-panel">
+        <h4>Live Gantt Chart</h4>
+        <div class="live-gantt-track" id="liveGanttTrack"><span class="live-gantt-empty">nothing scheduled yet</span></div>
+        <div class="live-gantt-ticks" id="liveGanttTicks"></div>
+      </div>
+
+      <div class="grid">
+        <div class="box ready" id="readyQueue"><h3>Ready Queue</h3><div class="process-row"></div></div>
+        <div class="box cpu" id="cpuBox"><h3>CPU</h3><div class="process-row"></div></div>
+        <div class="box waiting" id="waitingQueue"><h3>Waiting Queue</h3><div class="process-row"></div></div>
+        <div class="box terminated" id="terminatedQueue"><h3>Terminated</h3><div class="process-row"></div></div>
+      </div>
+
+      <svg id="arrows" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none;">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="black"/>
+          </marker>
+          <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#d82e2e"/>
+          </marker>
+        </defs>
+        <line id="arrowReadyToCPU" marker-end="url(#arrowhead)" />
+        <line id="arrowCPUToWaiting" marker-end="url(#arrowhead)" />
+        <line id="arrowWaitingToReady" marker-end="url(#arrowhead)" />
+        <line id="arrowCPUToTerminated" marker-end="url(#arrowhead)" />
+      </svg>
+    </div>
+
+    <div id="output" style="margin-top:3rem"></div>
+  </div>
+
+  <div class="modal" id="processModal">
+    <div class="modal-content">
+      <button class="close" onclick="closeModal()">&times;</button>
+      <label>Arrival Time</label>
+      <input type="number" id="arrivalTime" value="0">
+      <label>Burst Time</label>
+      <input type="number" id="modalBurstTime" value="1">
+      <div id="priorityInput" style="display:none">
+        <label>Priority</label>
+        <input type="number" id="processPriority" value="1">
+      </div>
+      <div id="queueInput" style="display: none;">
+        <label>Queue Type (0 for RR, 1 for FCFS)</label>
+        <input type="number" id="queueType" min="0" max="1" value="0">
+      </div>
+      <label>Process Color</label>
+      <input type="color" id="processColor" value="#ffe83f">
+      <button onclick="submitProcess()">Submit</button>
+    </div>
+  </div>
+
+<script>
+    const processes = [];
+
+    // ---------- Basic UI wiring ----------
+    function resetSelections() {
+      document.getElementById("algorithm").value = "";
+      document.getElementById("preemptive").checked = false;
+      document.getElementById("non-preemptive").checked = false;
+      document.getElementById("timeQuantum").value = 2;
+      document.getElementById("quantumInput").style.display = "none";
+      document.getElementById("radioOptions").style.display = "none";
+
+      stopSimulation();
+      document.getElementById('stateSimulator').style.display = 'none';
+      clearProcesses();
+    }
+
+    function backToHome() {
+    window.location.href = "index.html";
+    }
+
+    document.getElementById("algorithm").addEventListener("change", function () {
+      const algo = this.value;
+      document.getElementById("priorityInput").style.display = algo === "Priority" ? "block" : "none";
+      document.getElementById("quantumInput").style.display = (algo === "Round Robin" || algo === "Multilevel") ? "block" : "none";
+      const radioGroup = document.getElementById("radioOptions");
+      if (algo === "SJF" || algo === "Priority") {
+        radioGroup.style.display = "flex";
+      } else {
+        radioGroup.style.display = "none";
+        document.getElementById("preemptive").checked = false;
+        document.getElementById("non-preemptive").checked = false;
+      }
+    });
+
+    function openModal() {
+      const selectedAlgo = document.getElementById("algorithm").value;
+      if (!selectedAlgo) {
+        alert("Please select a scheduling algorithm first.");
+        return;
+      }
+      document.getElementById("queueInput").style.display = (selectedAlgo === "Multilevel") ? "block" : "none";
+      document.getElementById('processModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('processModal').style.display = 'none';
+    }
+
+    function submitProcess() {
+      const arrival = parseFloat(document.getElementById('arrivalTime').value);
+      const burst = parseFloat(document.getElementById('modalBurstTime').value);
+      const color = document.getElementById('processColor').value;
+      const algo = document.getElementById('algorithm').value;
+
+      const priority = algo === 'Priority' ? parseInt(document.getElementById('processPriority').value) : null;
+      if (!isNaN(arrival) && !isNaN(burst)) {
+        const queueType = algo === 'Multilevel' ? parseInt(document.getElementById('queueType').value) : null;
+        processes.push({ id: processes.length + 1, arrival, burst, color, priority, queueType, remaining: burst, startTime: undefined, responseTime: 0 });
+        renderProcessList();
+        closeModal();
+        if (document.getElementById("output").innerHTML.trim() !== "" || document.getElementById('stateSimulator').style.display === 'block') {
+          submitSimulation();
+        }
+      } else {
+        alert('Please fill all fields');
+      }
+    }
+
+    function renderProcessList() {
+      const list = document.getElementById('processList');
+      const card = document.getElementById('processCard');
+      list.innerHTML = '';
+      if (processes.length === 0) {
+        card.style.display = 'none';
+        return;
+      }
+      card.style.display = 'block';
+      processes.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'process-item';
+        div.innerHTML = `<span style="color:${p.color}">■</span> P${i + 1} - Arrival: ${p.arrival}, Burst: ${p.burst}${p.priority != null ? ", Priority: " + p.priority : ""}${p.queueType != null ? ", Queue: " + p.queueType : ""}`;
+        list.appendChild(div);
+      });
+    }
+
+    function clearProcesses() {
+      processes.length = 0;
+      renderProcessList();
+      document.getElementById('output').innerHTML = '';
+      document.getElementById('processCard').style.display = 'none';
+    }
+
+    function mergeGanttBlocks(log, algo) {
+      if (!log || log.length === 0) return [];
+      const merged = [log[0]];
+      for (let i = 1; i < log.length; i++) {
+        const last = merged[merged.length - 1];
+        const current = log[i];
+        if (algo === 'Multilevel') {
+          if (last.id === current.id && last.color === current.color && last.queue === 1 && current.queue === 1) {
+            last.duration = +(last.duration + current.duration).toFixed(2);
+          } else {
+            merged.push(current);
+          }
+        } else if (algo !== 'Round Robin') {
+          if (last.id === current.id && last.color === current.color) {
+            last.duration = +(last.duration + current.duration).toFixed(2);
+          } else {
+            merged.push(current);
+          }
+        } else {
+          merged.push(current);
+        }
+      }
+      return merged;
+    }
+
+    // ---------- Scheduling engine (bug-fixed FCFS/RR/Multilevel logic) ----------
+    function submitSimulation() {
+      stopSimulation(); // halt any running animation before recomputing
+
+      const algo = document.getElementById('algorithm').value;
+      const isPreemptive = document.getElementById('preemptive').checked;
+      const quantum = parseFloat(document.getElementById('timeQuantum').value);
+      const n = processes.length;
+
+      if (n === 0) {
+        alert("Add processes first!");
+        return;
+      }
+
+      const pList = processes.map(p => ({ ...p, remaining: p.burst }));
+      let time = 0, completed = 0;
+      const ganttLog = [];
+      let table = [];
+      let totalWaiting = 0, totalTurnaround = 0;
+
+      function logCompletion(p) {
+        p.completion = time;
+        p.turnaround = +(p.completion - p.arrival).toFixed(2);
+        p.waiting = +(p.turnaround - p.burst).toFixed(2);
+        totalWaiting += p.waiting;
+        totalTurnaround += p.turnaround;
+        table.push(p);
+      }
+
+      if (algo === 'SJF' && isPreemptive) {
+        while (completed < n) {
+          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
+          if (available.length === 0) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+          available.sort((a, b) => a.remaining - b.remaining);
+          const current = available[0];
+          current.remaining = +(current.remaining - 0.1).toFixed(1);
+          time = +(time + 0.1).toFixed(1);
+
+          const last = ganttLog[ganttLog.length - 1];
+          if (last && last.id === `P${current.id}`) {
+            last.duration = +(last.duration + 0.1).toFixed(1);
+          } else {
+            ganttLog.push({ id: `P${current.id}`, color: current.color, duration: 0.1 });
+          }
+
+          if (Math.abs(current.remaining) < 1e-9) {
+            logCompletion(current);
+            completed++;
+          }
+        }
+      } else if (algo === 'SJF') {
+        const remaining = [...pList];
+        while (completed < n) {
+          const ready = remaining.filter(p => p.arrival <= time);
+          if (ready.length === 0) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+          ready.sort((a, b) => a.burst - b.burst);
+          const current = ready[0];
+          time = Math.max(time, current.arrival);
+          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: current.burst });
+          time = +(time + current.burst).toFixed(2);
+          logCompletion(current);
+          completed++;
+          remaining.splice(remaining.indexOf(current), 1);
+        }
+      } else if (algo === 'FCFS') {
+        pList.sort((a, b) => a.arrival - b.arrival);
+        for (const p of pList) {
+          if (time < p.arrival) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: p.arrival - time });
+            time = p.arrival;
+          }
+          ganttLog.push({ id: `P${p.id}`, color: p.color, duration: p.burst });
+          time = +(time + p.burst).toFixed(2);
+          logCompletion(p);
+        }
+      } else if (algo === 'Priority' && isPreemptive) {
+        while (completed < n) {
+          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
+          if (available.length === 0) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+          available.sort((a, b) => a.priority - b.priority);
+          const current = available[0];
+          current.remaining = +(current.remaining - 0.1).toFixed(1);
+          time = +(time + 0.1).toFixed(1);
+          const last = ganttLog[ganttLog.length - 1];
+          if (last && last.id === `P${current.id}`) {
+            last.duration = +(last.duration + 0.1).toFixed(1);
+          } else {
+            ganttLog.push({ id: `P${current.id}`, color: current.color, duration: 0.1 });
+          }
+          if (Math.abs(current.remaining) < 1e-9) {
+            logCompletion(current);
+            completed++;
+          }
+        }
+      } else if (algo === 'Priority') {
+        while (completed < n) {
+          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
+          if (available.length === 0) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+          available.sort((a, b) => a.priority - b.priority);
+          const current = available[0];
+          time = Math.max(time, current.arrival);
+          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: current.burst });
+          time = +(time + current.burst).toFixed(2);
+          current.remaining = 0;
+          logCompletion(current);
+          completed++;
+        }
+      } else if (algo === 'Round Robin') {
+        if (isNaN(quantum) || quantum <= 0) return alert("Enter valid quantum");
+        const readyQueue = [];
+        let currentTime = 0;
+        let completedRR = 0;
+        const arrived = new Set();
+        while (completedRR < n) {
+          pList.forEach(p => {
+            if (p.arrival <= currentTime && p.remaining > 0 && !arrived.has(p)) {
+              readyQueue.push(p);
+              arrived.add(p);
+            }
+          });
+          if (readyQueue.length === 0) {
+            const nextArrival = Math.min(...pList.filter(p => p.remaining > 0).map(p => p.arrival));
+            if (nextArrival > currentTime) {
+              ganttLog.push({ id: 'Idle', color: '#ccc', duration: nextArrival - currentTime });
+              currentTime = nextArrival;
+            }
+            continue;
+          }
+          const current = readyQueue.shift();
+          if (current.remaining <= 0) continue;
+
+          const slice = Math.min(quantum, current.remaining);
+          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: slice, queue: 0 });
+          current.remaining = +(current.remaining - slice).toFixed(2);
+          currentTime = +(currentTime + slice).toFixed(2);
+          time = currentTime;
+          pList.forEach(p => {
+            if (p.arrival > currentTime - slice && p.arrival <= currentTime && p.remaining > 0 && !arrived.has(p)) {
+              readyQueue.push(p);
+              arrived.add(p);
+            }
+          });
+          if (current.remaining > 0) {
+            readyQueue.push(current);
+          } else {
+            logCompletion(current);
+            completedRR++;
+          }
+        }
+        completed = completedRR;
+      } else if (algo === 'Multilevel') {
+        if (isNaN(quantum) || quantum <= 0) return alert("Enter valid quantum for Queue 0");
+        const queue0 = pList.filter(p => p.queueType === 0);
+        const queue1 = pList.filter(p => p.queueType === 1);
+        queue0.forEach(p => { p.remaining = p.burst; });
+        queue1.forEach(p => { p.remaining = p.burst; });
+        let currentTime = 0; let completedML = 0;
+        const totalProcesses = pList.length;
+        const rrQueue = []; const fcfsQueue = []; const fcfsSliceBuffer = [];
+        const getReady = (queue) => queue.filter(p => p.arrival <= currentTime && p.remaining > 0);
+        while (completedML < totalProcesses) {
+          queue0.forEach(p => {
+            if (p.arrival <= currentTime && p.remaining > 0 && !rrQueue.includes(p)) { rrQueue.push(p); }
+          });
+          if (rrQueue.length > 0) {
+            const current = rrQueue.shift();
+            const execTime = Math.min(current.remaining, quantum);
+            ganttLog.push({ id: `P${current.id}`, color: current.color, duration: execTime });
+            current.remaining -= execTime; currentTime += execTime;
+            queue0.forEach(p => {
+              if (p.arrival > currentTime - execTime && p.arrival <= currentTime && p.remaining > 0 && !rrQueue.includes(p)) {
+                rrQueue.push(p);
+              }
+            });
+            if (current.remaining > 0) { rrQueue.push(current); }
+            else {
+              current.completion = currentTime;
+              current.turnaround = +(current.completion - current.arrival).toFixed(2);
+              current.waiting = +(current.turnaround - current.burst).toFixed(2);
+              totalWaiting += current.waiting; totalTurnaround += current.turnaround;
+              table.push(current); completedML++;
+            }
+          } else {
+            const readyQ1 = getReady(queue1);
+            if (fcfsQueue.length === 0 && readyQ1.length > 0) {
+              fcfsQueue.push(...readyQ1.sort((a, b) => a.arrival - b.arrival));
+            }
+            const current = fcfsQueue[0];
+            if (current) {
+              const slice = 1;
+              const execTime = Math.min(current.remaining, slice);
+              fcfsSliceBuffer.push({ id: `P${current.id}`, color: current.color, duration: execTime, queue: 1 });
+              current.remaining -= execTime; currentTime += execTime;
+              const newRR = getReady(queue0);
+              if (newRR.length > 0) continue;
+              if (current.remaining <= 0) {
+                const totalDuration = fcfsSliceBuffer.reduce((sum, s) => sum + s.duration, 0);
+                ganttLog.push({ id: `P${current.id}`, color: current.color, duration: totalDuration, queue: 1 });
+                fcfsSliceBuffer.length = 0;
+                current.completion = currentTime;
+                current.turnaround = +(current.completion - current.arrival).toFixed(2);
+                current.waiting = +(current.turnaround - current.burst).toFixed(2);
+                totalWaiting += current.waiting; totalTurnaround += current.turnaround;
+                table.push(current); fcfsQueue.shift(); completedML++;
+              }
+            } else {
+              ganttLog.push({ id: 'Idle', color: '#ccc', duration: 1 });
+              currentTime += 1;
+            }
+          }
+        }
+        completed = completedML;
+      }
+
+      const mergedGantt = mergeGanttBlocks(ganttLog, algo);
+
+      // Metrics
+      const avgWait = (totalWaiting / n).toFixed(2);
+      const avgTat = (totalTurnaround / n).toFixed(2);
+      const totalBurstTime = pList.reduce((sum, p) => sum + p.burst, 0);
+      const completedProcs = pList.filter(p => p.completion !== undefined);
+      const totalStartTime = Math.min(...completedProcs.map(p => p.arrival));
+      const totalEndTime = Math.max(...completedProcs.map(p => p.completion));
+      let totalTime = totalEndTime - totalStartTime;
+      if (totalTime <= 0 || isNaN(totalTime)) totalTime = 1;
+      const throughput = (n / totalTime).toFixed(2);
+
+      const ganttAndTicksHTML = `
+        <div class="scroll-wrapper" style="overflow-x:auto;">
+          <div class="gantt-tick-container">
+            <div class="gantt-bar-wrapper">
+              ${mergedGantt.map(block => `
+                <div style="
+                  flex: 0 0 ${block.duration * 30}px;
+                  background: linear-gradient(to bottom right, ${block.color}, #d4af37);
+                  padding: 10px 6px;
+                  margin-right: 4px;
+                  text-align: center;
+                  color: #000;
+                  font-size: 16px;
+                  font-weight: bold;
+                  border-radius: 6px;
+                  box-shadow: inset -3px -3px 6px rgba(255,255,255,0.6),
+                              inset 3px 3px 6px rgba(0,0,0,0.3);
+                ">
+                  ${block.id}
+                </div>`).join('')}
+            </div>
+            <div class="tick-mark-wrapper" style="margin-top: 5px;">
+              ${(() => {
+                let tickHTML = "";
+                let timeCounter = 0;
+                mergedGantt.forEach(block => {
+                  tickHTML += `<div style="flex: 0 0 ${block.duration * 30}px; text-align:left; font-size: 16px; font-weight: bold;color: black; margin-right: 4px;">
+                    ${timeCounter.toFixed(1)}
+                  </div>`;
+                  timeCounter = +(timeCounter + block.duration).toFixed(1);
+                });
+                tickHTML += `<div style="font-size: 16px; font-weight: bold;color: black;">${timeCounter.toFixed(1)}</div>`;
+                return tickHTML;
+              })()}
+            </div>
+          </div>
+        </div>
+      `;
+
+      const tableHTML = `
+        <table class="result-table" style="width:100%; border-collapse:collapse; margin-bottom:20px;" border="1">
+          <tr style="background:#f4f4f4;">
+            <th>PID</th><th>Arrival</th><th>Burst</th><th>Completion</th><th>Waiting</th><th>Turnaround</th>
+          </tr>
+          ${table.map(p => `
+            <tr>
+              <td>P${p.id}</td><td>${p.arrival.toFixed(2)}</td><td>${p.burst.toFixed(2)}</td>
+              <td>${p.completion.toFixed(2)}</td><td>${p.waiting.toFixed(2)}</td><td>${p.turnaround.toFixed(2)}</td>
+            </tr>`).join('')}
+        </table>`;
+
+      const finalHTML = `
+        <h2>Final Gantt Chart</h2>
+        ${ganttAndTicksHTML}
+        ${tableHTML}
+        <div class="metrics-box">
+          <p><strong>Avg Waiting Time:</strong> ${avgWait}</p>
+          <p><strong>Avg Turnaround Time:</strong> ${avgTat}</p>
+          <p><strong>Throughput:</strong> ${throughput}</p>
+        </div>`;
+
+      // Don't reveal the final static table/metrics yet -- it appears once
+      // the live animation finishes, mirroring how the live gantt bars build up.
+      document.getElementById('output').innerHTML = '';
+
+      // Reset + show the simulator
+      document.getElementById('stateSimulator').style.display = 'block';
+      resetLiveGantt();
+      connectBoxes();
+
+      simState.isStopped = false;
+      simState.isPaused = false;
+      simState.elapsed = 0;
+      updateSimClock(0);
+      document.getElementById('btnPlayPause').innerHTML = "⏸ Pause";
+      document.getElementById('btnPlayPause').style.backgroundColor = "#fbc02d";
+      updateStatus("Simulation starting...", "#1976d2");
+
+      runDynamicStateAnimation(mergedGantt, processes, finalHTML).catch(err => {
+        if (err !== 'stopped') console.error(err);
+      });
+    }
+
+    /* -------- LIVE GANTT (builds up bar-by-bar as the animation plays) -------- */
+
+    let liveGanttTime = 0;
+
+    function resetLiveGantt() {
+      const track = document.getElementById('liveGanttTrack');
+      track.innerHTML = '<span class="live-gantt-empty">nothing scheduled yet</span>';
+      document.getElementById('liveGanttTicks').innerHTML = '';
+      liveGanttTime = 0;
+    }
+
+    function appendLiveGanttBar(block) {
+      const track = document.getElementById('liveGanttTrack');
+      const ticks = document.getElementById('liveGanttTicks');
+      const empty = track.querySelector('.live-gantt-empty');
+      if (empty) track.innerHTML = '';
+
+      const widthPx = Math.max(block.duration * 30, 22) + 'px';
+
+      const div = document.createElement('div');
+      div.className = 'live-gantt-block';
+      div.style.flexBasis = widthPx;
+      div.style.width = widthPx;
+      div.style.background = block.id === 'Idle'
+        ? '#ccc'
+        : `linear-gradient(to bottom right, ${block.color}, #d4af37)`;
+      div.textContent = block.id;
+      track.appendChild(div);
+      track.scrollLeft = track.scrollWidth;
+
+      // Tick showing the time this bar started at, aligned under its left edge.
+      const tick = document.createElement('div');
+      tick.className = 'live-gantt-tick';
+      tick.style.flexBasis = widthPx;
+      tick.style.width = widthPx;
+      tick.textContent = liveGanttTime.toFixed(1);
+      ticks.appendChild(tick);
+
+      liveGanttTime = +(liveGanttTime + block.duration).toFixed(2);
+
+      // Keep a trailing tick showing the running end time, so the far edge
+      // of the chart always has a label too -- replace it each time.
+      let endTick = ticks.querySelector('.live-gantt-tick-end');
+      if (!endTick) {
+        endTick = document.createElement('div');
+        endTick.className = 'live-gantt-tick live-gantt-tick-end';
+        ticks.appendChild(endTick);
+      } else {
+        ticks.appendChild(endTick); // move to the end
+      }
+      endTick.textContent = liveGanttTime.toFixed(1);
+      ticks.scrollLeft = ticks.scrollWidth;
+    }
+
+    function updateSimClock(t) {
+      document.getElementById('simClock').textContent = t.toFixed(2);
+    }
+
+    /* -------- STATE ANIMATION & CONTROLS -------- */
+
+    let simState = {
+      isPaused: false,
+      isStopped: false,
+      speed: 1,
+      elapsed: 0
+    };
+
+    function toggleSimPause() {
+      simState.isPaused = !simState.isPaused;
+      const btn = document.getElementById('btnPlayPause');
+      if (simState.isPaused) {
+        btn.innerHTML = "▶ Resume";
+        btn.style.backgroundColor = "#4CAF50";
+        btn.style.color = "#fff";
+        updateStatus("Simulation Paused.", "#fb8c00");
+      } else {
+        btn.innerHTML = "⏸ Pause";
+        btn.style.backgroundColor = "#fbc02d";
+        btn.style.color = "#000";
+        updateStatus("Simulation Resumed.", "#1976d2");
+      }
+    }
+
+    function stopSimulation() {
+      simState.isStopped = true;
+      if (document.getElementById('stateSimulator').style.display === 'block') {
+        updateStatus("Simulation Stopped. Click Submit to restart.", "#e53935");
+      }
+    }
+
+    function restartSimulation() {
+      simState.isStopped = true;
+      updateStatus("Restarting simulation...", "#1976d2");
+      setTimeout(() => { submitSimulation(); }, 100);
+    }
+
+    function updateSpeed() {
+      const val = document.getElementById('speedSlider').value;
+      simState.speed = parseFloat(val);
+      document.getElementById('speedLabel').innerText = val + "x";
+    }
+
+    function updateStatus(message, borderColor) {
+      const statusBox = document.getElementById('simStatusText');
+      statusBox.innerText = message;
+      statusBox.style.borderLeftColor = borderColor;
+    }
+
+    async function customDelay(baseMs) {
+      let elapsed = 0;
+      const interval = 50;
+      while (elapsed < baseMs) {
+        if (simState.isStopped) return Promise.reject('stopped');
+        if (!simState.isPaused) {
+          elapsed += (interval * simState.speed);
+        }
+        await new Promise(r => setTimeout(r, interval));
+      }
+    }
+
+    function connectBoxes(){
+      const svg = document.getElementById("arrows").getBoundingClientRect();
+      function edgePoint(rect, side){
+        switch(side){
+          case "top":    return { x: rect.left + rect.width / 2 - svg.left, y: rect.top - svg.top };
+          case "bottom": return { x: rect.left + rect.width / 2 - svg.left, y: rect.bottom - svg.top };
+          case "left":   return { x: rect.left - svg.left, y: rect.top + rect.height / 2 - svg.top };
+          case "right":  return { x: rect.right - svg.left, y: rect.top + rect.height / 2 - svg.top };
+        }
+      }
+      function setLine(lineId, fromId, toId, fromSide, toSide){
+        const fromRect = document.getElementById(fromId).getBoundingClientRect();
+        const toRect = document.getElementById(toId).getBoundingClientRect();
+        const from = edgePoint(fromRect, fromSide);
+        const to = edgePoint(toRect, toSide);
+        const line = document.getElementById(lineId);
+        if(line) {
+          line.setAttribute("x1", from.x); line.setAttribute("y1", from.y);
+          line.setAttribute("x2", to.x); line.setAttribute("y2", to.y);
+        }
+      }
+      setLine("arrowReadyToCPU","readyQueue","cpuBox","right","left");
+      setLine("arrowCPUToWaiting","cpuBox","waitingQueue","bottom","top");
+      setLine("arrowWaitingToReady","waitingQueue","readyQueue","left","bottom");
+      setLine("arrowCPUToTerminated","cpuBox","terminatedQueue","right","left");
+    }
+    window.addEventListener("resize", connectBoxes);
+
+    async function highlightArrow(id, baseDuration = 800){
+      const arrow = document.getElementById(id);
+      connectBoxes();
+      arrow.classList.add("arrow-active");
+      arrow.setAttribute('marker-end', 'url(#arrowhead-active)');
+      try {
+        await customDelay(baseDuration);
+        arrow.classList.remove("arrow-active");
+        arrow.setAttribute('marker-end', 'url(#arrowhead)');
+      } catch (e) {
+        arrow.classList.remove("arrow-active");
+        arrow.setAttribute('marker-end', 'url(#arrowhead)');
+        throw e;
+      }
+    }
+
+    async function runDynamicStateAnimation(gantt, originalProcesses, finalHTML) {
+      const readyRow = document.querySelector("#readyQueue .process-row");
+      const cpuRow = document.querySelector("#cpuBox .process-row");
+      const waitingRow = document.querySelector("#waitingQueue .process-row");
+      const terminatedRow = document.querySelector("#terminatedQueue .process-row");
+
+      readyRow.innerHTML = ""; cpuRow.innerHTML = "";
+      waitingRow.innerHTML = ""; terminatedRow.innerHTML = "";
+
+      originalProcesses.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "anim-process";
+        div.id = `anim-P${p.id}`;
+        div.innerText = `P${p.id}`;
+        div.style.backgroundColor = p.color;
+        readyRow.appendChild(div);
+      });
+
+      await customDelay(200);
+      connectBoxes();
+
+      for (let i = 0; i < gantt.length; i++) {
+        if (simState.isStopped) return;
+
+        const block = gantt[i];
+
+        if (block.id === 'Idle') {
+          appendLiveGanttBar(block);
+          updateStatus(`CPU is currently Idle for ${block.duration.toFixed(1)} ms.`, "#ccc");
+          await customDelay(1000 * block.duration);
+          simState.elapsed = +(simState.elapsed + block.duration).toFixed(2);
+          updateSimClock(simState.elapsed);
+          continue;
+        }
+
+        const pDiv = document.getElementById(`anim-${block.id}`);
+        if (!pDiv) continue;
+
+        // --- Ready -> CPU (dispatch): draw its live gantt bar right away ---
+        updateStatus(`Process ${block.id} is dispatched to the CPU.`, "#fbc02d");
+        appendLiveGanttBar(block);
+        pDiv.classList.add("glow");
+        cpuRow.appendChild(pDiv);
+        connectBoxes();
+        await highlightArrow("arrowReadyToCPU", 800);
+
+        // Execute in CPU
+        updateStatus(`Process ${block.id} is executing (Duration: ${block.duration} units).`, "#4CAF50");
+        const executionDelay = Math.min(2500, Math.max(1000, block.duration * 400));
+        await customDelay(executionDelay);
+        pDiv.classList.remove("glow");
+
+        simState.elapsed = +(simState.elapsed + block.duration).toFixed(2);
+        updateSimClock(simState.elapsed);
+
+        const willRunAgain = gantt.slice(i + 1).some(b => b.id === block.id);
+
+        if (willRunAgain) {
+          updateStatus(`Time slice over! ${block.id} is preempted and moved to Waiting.`, "#fb8c00");
+          waitingRow.appendChild(pDiv);
+          pDiv.style.opacity = "0.7";
+          connectBoxes();
+          await highlightArrow("arrowCPUToWaiting", 800);
+
+          updateStatus(`${block.id} returns to Ready Queue.`, "#1976d2");
+          readyRow.appendChild(pDiv);
+          pDiv.style.opacity = "1";
+          connectBoxes();
+          await highlightArrow("arrowWaitingToReady", 600);
+        } else {
+          updateStatus(`Process ${block.id} has completed execution and is Terminated.`, "#e53935");
+          terminatedRow.appendChild(pDiv);
+          pDiv.style.backgroundColor = "#ccc";
+          connectBoxes();
+          await highlightArrow("arrowCPUToTerminated", 800);
+        }
+
+        connectBoxes();
+      }
+
+      updateStatus("Simulation Complete! All processes terminated.", "#4CAF50");
+      document.getElementById('output').innerHTML = finalHTML;
+      document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+</script>
+</body>
+</html>

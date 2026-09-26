@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="brief description" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CPU SCHEDULING ALGORITHM</title>
+  <link rel="icon" href="images/vlab-logo.png" type="image/x-icon" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/base16/harmonic16-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+</head>
+
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <div class="logo">
+        <a href="https://www.vlab.andcollege.du.ac.in" rel="noopener" target="_blank">
+          <img class="logo-img" src="images/logo.png" alt="VLab" />
+        </a>
+      </div>
+      <h1 class="vlab">V-Lab@ANDC</h1>
+    </div>
+
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+    <nav class="nav-menu" id="small-screen">
+      <div class="close-btn" onclick="toggleMenu()">✖</div>
+      <a href="https://www.vlab.andcollege.du.ac.in">Home</a>
+      <a href="https://www.vlab.andcollege.du.ac.in#labs_section">Labs</a>
+      <a href="https://www.vlab.andcollege.du.ac.in#team">Team</a>
+      <a href="https://www.andcollege.du.ac.in">College Website</a>
+    </nav>
+  </header>
+  <button id="backToTop" title="Go to top" aria-label="Back to Top">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path
+        d="M11 18.5c-.4-.1-1.3-.9-5.5-5.2-3.4-3.4-5.1-5.2-5.2-5.5-.2-.5-.2-1.0 0-1.4.3-.9 1.5-1.4 2.3-1 .1 0 2.2 2.1 4.7 4.5 2.5 2.5 4.5 4.5 4.7 4.5.3.1-.3.7 6.8-6.3 2.8-2.8 3-2.9 3.8-2.8 1.1.2 1.8 1.4 1.4 2.5-.2.5-10.1 10.3-10.7 10.6-.6.3-1.6.4-2.3.1z" />
+    </svg>
+  </button>
+
+
+
+  <div class="yourvlabtitle">
+    <h1>CPU SCHEDULING ALGORITHM</h1>
+  </div>
+
+  <div class="pageview">
+    <div class="sticky-trigger"></div>
+
+    <div class="navigation-wrapper" id="navWrapper">
+      <nav class="navigation">
+        <div class="link" title="Aim" onclick="switchContent('aim')">
+          <img class="icon" src="images/Aim_img.png" alt="Aim" />
+          <span>Aim</span>
+        </div>
+
+        <div class="link" title="Theory & Application" onclick="switchContent('theory')">
+          <img class="icon" src="images/theory_img.png" alt="THEORY" />
+          <span>Theory & Application</span>
+        </div>
+
+        <div class="link" title="Procedure" onclick="switchContent('procedure')">
+          <img class="icon" src="images/procedure_img.png" alt="PROCEDURE" />
+          <span>Procedure</span>
+        </div>
+
+        <div class="link" title="Practice" onclick="switchContent('practice')">
+          <img class="icon" src="images/practice_img.png" alt="PRACTICE" />
+          <span>Practice</span>
+        </div>
+
+        <div class="link" title="Codes" onclick="switchContent('code')">
+          <img class="icon" src="images/code_img.png" alt="CODES" />
+          <span>Codes</span>
+        </div>
+
+        <div class="link" title="Result" onclick="switchContent('result')">
+          <img class="icon" src="images/result_img.png" alt="RESULT" />
+          <span>Result</span>
+        </div>
+
+        <div class="link" title="Quiz" onclick="switchContent('quiz')">
+          <img class="icon" src="images/quiz_img.png" alt="QUIZ" />
+          <span>Quiz</span>
+        </div>
+
+        <div class="link" title="References" onclick="switchContent('references')">
+          <img class="icon" src="images/reference_img.png" alt="REFERENCE" />
+          <span>References</span>
+        </div>
+        <div class="link" title="Team & Tools" onclick="switchContent('tnt')">
+          <img class="icon" src="images/tnt_img.png" alt="TEAM & TOOLS" />
+          <span>Team & Tools</span>
+        </div>
+      </nav>
+    </div>
+
+    <section class="main_practical">
+      <!-- Aim -->
+      <div class="container" id="aim">
+        <div class="title">Aim</div>
+        <div>
+        <p style="font-size: 18px;">To design and implement a CPU Scheduling Simulator that
+           visually demonstrates different CPU scheduling algorithms — 
+           <b>FCFS, SJF (preemptive/non‑preemptive), Priority (preemptive/non‑preemptive),
+            Round Robin, and Multilevel Queue </b>— and 
+            analyzes their performance using Average Waiting Time, 
+            Average Turnaround Time, and Throughput,
+             while featuring a live animation of Gantt chart
+             generation as processes transition among the Ready Queue, CPU, Waiting Queue, and Terminated states.</p>
+        </div>
+      </div>
+
+      <!-- Theory & Applications -->
+      <div class="container" id="theory">
+        <div class="title">Theory & Applications</div>
+        <div class="content">
+            <div class="theory-card">
+                <h2>1. Introduction to CPU Scheduling</h2>
+                <p>
+                    A computer system may have several processes waiting to be executed,
+                    but the CPU can execute only one process at a time on a single CPU core.
+                    Therefore, the operating system needs to decide which process should
+                    be given the CPU next.
+                </p>
+                <p>
+                    This decision-making process is called
+                    <strong>CPU Scheduling</strong>. The component of the operating system
+                    responsible for selecting the next process is called the
+                    <strong>CPU Scheduler</strong>.
+                </p>
+                <div class="concept-box">
+                    <strong>Simple Example:</strong>
+                    <p>
+                        Suppose P1, P2 and P3 are waiting for the CPU. The scheduler
+                        selects one process according to the selected scheduling algorithm.
+                        Different algorithms may select the processes in different orders,
+                        resulting in different waiting times and turnaround times.
+                    </p>
+                </div>
+            </div>
+            <div class="theory-card">
+                <h2>2. Important Terms</h2>
+
+                <h3>Process</h3>
+                <p>
+                    A <strong>process</strong> is a program that is currently being executed.
+                    In this simulator, processes are represented as P1, P2, P3, and so on.
+                </p>
+
+                <h3>Arrival Time (AT)</h3>
+                <p>
+                    Arrival Time is the time at which a process becomes available
+                    for execution and enters the ready queue.
+                </p>
+
+                <div class="formula-box">
+                    Example: If P1 has Arrival Time = 2, P1 becomes available
+                    to the scheduler at time 2.
+                </div>
+
+                <h3>Burst Time (BT)</h3>
+                <p>
+                    Burst Time is the total amount of CPU time required by a process
+                    to complete its execution.
+                </p>
+
+                <div class="formula-box">
+                    Example: If P1 has Burst Time = 5, it requires 5 units of CPU time.
+                </div>
+
+                <h3>Completion Time (CT)</h3>
+                <p>
+                    Completion Time is the time at which a process finishes its execution.
+                </p>
+
+                <h3>Turnaround Time (TAT)</h3>
+                <p>
+                    Turnaround Time represents the total time taken by a process
+                    from its arrival until its completion.
+                </p>
+
+                <div class="formula">
+                    TAT = CT − AT
+                </div>
+
+                <h3>Waiting Time (WT)</h3>
+                <p>
+                    Waiting Time is the amount of time a process spends waiting
+                    in the ready queue for CPU execution.
+                </p>
+
+                <div class="formula">
+                    WT = TAT − BT
+                </div>
+
+                <h3>Throughput</h3>
+                <p>
+                    Throughput represents the number of processes completed per unit
+                    of time. A higher throughput generally means that more processes
+                    are completed in a given period.
+                </p>
+
+                <div class="formula">
+                    Throughput =
+                    Number of Completed Processes /
+                    Total Execution Interval
+                </div>
+            </div>
+            <div class="theory-card">
+                <h2>3. Preemptive and Non-Preemptive Scheduling</h2>
+
+                <h3>Non-Preemptive Scheduling</h3>
+
+                <p>
+                    In non-preemptive scheduling, once a process gets the CPU,
+                    it continues execution until its CPU burst is completed.
+                    The scheduler does not forcibly remove the process from the CPU.
+                </p>
+
+                <div class="example">
+                    <strong>Example:</strong>
+                    <br>
+                    P1 executes from 0 to 5. Even if another process arrives during
+                    this period, P1 continues until it completes.
+                </div>
+
+                <p>
+                    In this simulator, non-preemptive scheduling is used by:
+                </p>
+
+                <ul>
+                    <li>FCFS</li>
+                    <li>SJF Non-Preemptive</li>
+                    <li>Priority Non-Preemptive</li>
+                    <li>Queue 1 of Multilevel Queue</li>
+                </ul>
+
+
+                <h3>Preemptive Scheduling</h3>
+
+                <p>
+                    In preemptive scheduling, a running process can be interrupted
+                    before completing its CPU burst. The CPU can then be assigned
+                    to another process.
+                </p>
+
+                <p>
+                    Preemption is useful when the operating system needs to provide
+                    quick response or give preference to another process.
+                </p>
+
+                <p>
+                    In this simulator, preemptive scheduling is used by:
+                </p>
+
+                <ul>
+                    <li>SJF Preemptive</li>
+                    <li>Priority Preemptive</li>
+                    <li>Round Robin</li>
+                    <li>Queue 0 of Multilevel Queue</li>
+                </ul>
+            </div>
+            <div class="theory-card">
+                <h2>4. First Come First Serve (FCFS)</h2>
+
+                <p>
+                    <strong>First Come First Serve (FCFS)</strong> is one of the
+                    simplest CPU scheduling algorithms. The process that arrives
+                    first is selected first.
+                </p>
+
+                <div class="formula">
+                    First Process to Arrive → First Process to Execute
+                </div>
+
+                <h3>Characteristics</h3>
+
+                <ul>
+                    <li>It is a non-preemptive scheduling algorithm.</li>
+                    <li>Processes are normally executed according to arrival order.</li>
+                    <li>It is simple to understand and implement.</li>
+                    <li>It does not require a time quantum.</li>
+                    <li>It can suffer from the Convoy Effect.</li>
+                </ul>
+
+                <h3>Example</h3>
+
+                <table class="theory-table">
+                    <tr>
+                        <th>Process</th>
+                        <th>Arrival Time</th>
+                        <th>Burst Time</th>
+                    </tr>
+                    <tr>
+                        <td>P1</td>
+                        <td>0</td>
+                        <td>5</td>
+                    </tr>
+                    <tr>
+                        <td>P2</td>
+                        <td>1</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>P3</td>
+                        <td>2</td>
+                        <td>2</td>
+                    </tr>
+                </table>
+
+                <div class="gantt-example">
+                    | P1 | P2 | P3 |
+                    <br>
+                    0 &nbsp;&nbsp; 5 &nbsp;&nbsp; 8 &nbsp;&nbsp; 10
+                </div>
+
+                <p>
+                    Since P1 arrives first, it executes first. After P1 completes,
+                    P2 executes, followed by P3.
+                </p>
+            </div>
+            <div class="theory-card">
+                <h2>5. Shortest Job First (SJF)</h2>
+
+                <p>
+                    <strong>Shortest Job First (SJF)</strong> selects the available
+                    process having the smallest burst time.
+                </p>
+
+                <p>
+                    Your simulator supports both:
+                </p>
+
+                <ul>
+                    <li><strong>SJF Non-Preemptive</strong></li>
+                    <li><strong>SJF Preemptive</strong></li>
+                </ul>
+
+                <h3>SJF Non-Preemptive</h3>
+
+                <p>
+                    The process with the shortest burst time is selected from the
+                    currently available processes. Once selected, it continues
+                    until its burst is completed.
+                </p>
+
+                <h3>SJF Preemptive</h3>
+
+                <p>
+                    The preemptive version is commonly known as
+                    <strong>Shortest Remaining Time First (SRTF)</strong>.
+                    The scheduler continuously checks the remaining CPU time of
+                    available processes and selects the process with the smallest
+                    remaining time.
+                </p>
+
+                <div class="concept-box">
+                    <strong>Important:</strong>
+                    <p>
+                        In the preemptive version, a newly arrived process can
+                        interrupt the currently running process if its remaining
+                        burst time is smaller.
+                    </p>
+                </div>
+
+                <h3>Advantage</h3>
+                <p>
+                    SJF can provide a low average waiting time when the burst times
+                    of processes are known accurately.
+                </p>
+
+                <h3>Disadvantage</h3>
+                <p>
+                    Long processes may have to wait for a long time if shorter
+                    processes continuously arrive. This situation is called
+                    <strong>starvation</strong>.
+                </p>
+            </div>
+            <div class="theory-card">
+                <h2>6. Round Robin (RR)</h2>
+
+                <p>
+                    <strong>Round Robin</strong> is a preemptive scheduling algorithm
+                    commonly used in time-sharing systems.
+                </p>
+
+                <p>
+                    Each process receives a fixed amount of CPU time called the
+                    <strong>Time Quantum</strong>.
+                </p>
+
+                <div class="formula">
+                    Time Quantum = Maximum CPU time given to a process in one turn
+                </div>
+
+                <h3>Example</h3>
+
+                <p>
+                    Suppose the time quantum is 2 units and P1 requires 5 units
+                    of CPU time.
+                </p>
+
+                <div class="gantt-example">
+                    P1 → 2 units
+                    <br>
+                    P1 → 2 units
+                    <br>
+                    P1 → 1 unit
+                </div>
+
+                <p>
+                    If the process does not finish during its time quantum,
+                    it is placed back into the ready queue and another process
+                    gets the CPU.
+                </p>
+
+                <h3>Effect of Time Quantum</h3>
+
+                <ul>
+                    <li>
+                        <strong>Small quantum:</strong>
+                        More frequent context switching and better responsiveness.
+                    </li>
+                    <li>
+                        <strong>Large quantum:</strong>
+                        Fewer context switches and behavior becomes closer to FCFS.
+                    </li>
+                </ul>
+
+                <div class="concept-box">
+                    <strong>Simulator Tip:</strong>
+                    <p>
+                        Try the same set of processes with quantum values 1, 2,
+                        4 and 6. Compare the Gantt charts and average waiting times.
+                    </p>
+                </div>
+            </div>
+            <div class="theory-card">
+                <h2>7. Priority Scheduling</h2>
+
+                <p>
+                    In Priority Scheduling, every process is assigned a priority.
+                    The scheduler selects the process according to its priority value.
+                </p>
+
+                <div class="important-box">
+                    <strong>Rule used in this simulator:</strong>
+                    <br>
+                    Smaller priority number = Higher priority
+                </div>
+
+                <h3>Example</h3>
+
+                <table class="theory-table">
+                    <tr>
+                        <th>Process</th>
+                        <th>Priority</th>
+                    </tr>
+                    <tr>
+                        <td>P1</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>P2</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>P3</td>
+                        <td>2</td>
+                    </tr>
+                </table>
+
+                <p>
+                    The execution preference will be:
+                </p>
+
+                <div class="formula">
+                    P2 → P3 → P1
+                </div>
+
+                <p>
+                    because:
+                </p>
+
+                <div class="formula">
+                    3 &lt; 2 &lt; 1
+                </div>
+
+                <h3>Types supported by this simulator</h3>
+
+                <ul>
+                    <li><strong>Non-Preemptive Priority:</strong> the selected process completes before another process is selected.</li>
+                    <li><strong>Preemptive Priority:</strong> a newly available higher-priority process can interrupt the running process.</li>
+                </ul>
+            </div>
+
+
+            <!-- 8. Multilevel Queue -->
+            <div class="theory-card">
+                <h2>8. Multilevel Queue Scheduling</h2>
+
+                <p>
+                    Multilevel Queue Scheduling divides processes into different
+                    queues. Each queue can use a different scheduling algorithm.
+                </p>
+
+                <p>
+                    Your simulator implements two queues:
+                </p>
+
+                <table class="theory-table">
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scheduling Algorithm</th>
+                    </tr>
+                    <tr>
+                        <td>Queue 0</td>
+                        <td>Round Robin</td>
+                    </tr>
+                    <tr>
+                        <td>Queue 1</td>
+                        <td>FCFS</td>
+                    </tr>
+                </table>
+
+                <p>
+                    While adding a process, the user can select:
+                </p>
+
+                <div class="formula">
+                    Queue 0 → Round Robin
+                    <br>
+                    Queue 1 → FCFS
+                </div>
+
+                <p>
+                    In this implementation, Queue 0 is given preference whenever
+                    a Queue 0 process is ready. Queue 1 processes are considered
+                    when Queue 0 has no ready process.
+                </p>
+
+                <div class="concept-box">
+                    <strong>Example:</strong>
+                    <p>
+                        If P1 belongs to Queue 0 and P2 belongs to Queue 1,
+                        and both are ready, the simulator gives CPU preference
+                        to P1 because Queue 0 has higher preference.
+                    </p>
+                </div>
+            </div>
+            <div class="theory-card">
+                <h2>9. Process States in the Simulator</h2>
+
+                <p>
+                    The simulator visually represents the movement of processes
+                    between different CPU scheduling states.
+                </p>
+
+                <h3>Ready Queue</h3>
+
+                <p>
+                    Contains processes that are ready to execute but are waiting
+                    for the CPU.
+                </p>
+
+                <h3>CPU / Running State</h3>
+
+                <p>
+                    Contains the process that is currently being executed by the CPU.
+                </p>
+
+                <h3>Waiting Queue</h3>
+
+                <p>
+                    A process may temporarily leave the CPU when it is preempted
+                    or when its current time slice ends. The simulator visually
+                    represents this transition through the Waiting Queue.
+                </p>
+
+                <h3>Terminated</h3>
+
+                <p>
+                    A process enters the Terminated state after completing its
+                    required CPU execution.
+                </p>
+
+                <div class="state-flow">
+                    Ready Queue
+                    <span>→</span>
+                    CPU
+                    <span>→</span>
+                    Terminated
+                </div>
+
+                <div class="state-flow">
+                    CPU
+                    <span>→</span>
+                    Waiting
+                    <span>→</span>
+                    Ready Queue
+                </div>
+            </div>
+            <div class="theory-card">
+                <h2>10. Gantt Chart</h2>
+
+                <p>
+                    A <strong>Gantt Chart</strong> is a graphical representation
+                    of process execution over time. It shows which process is using
+                    the CPU at a particular time.
+                </p>
+
+                <div class="gantt-example">
+                    | P1 | P2 | P3 |
+                    <br>
+                    0 &nbsp;&nbsp; 5 &nbsp;&nbsp; 8 &nbsp;&nbsp; 10
+                </div>
+
+                <p>
+                    From this chart:
+                </p>
+
+                <ul>
+                    <li>P1 executes from time 0 to 5.</li>
+                    <li>P2 executes from time 5 to 8.</li>
+                    <li>P3 executes from time 8 to 10.</li>
+                </ul>
+
+                <p>
+                    Your simulator provides both a <strong>Live Gantt Chart</strong>,
+                    which is built while the simulation is running, and a
+                    <strong>Final Gantt Chart</strong>, which is displayed after
+                    the simulation completes.
+                </p>
+            </div>
+            <div class="theory-card">
+                <h2>11. Performance Metrics</h2>
+
+                <p>
+                    The simulator calculates the following performance measures
+                    after the scheduling process is completed.
+                </p>
+
+                <h3>Average Waiting Time</h3>
+
+                <p>
+                    It is the average amount of time that all processes spend
+                    waiting for CPU execution.
+                </p>
+
+                <div class="formula">
+                    Average Waiting Time =
+                    Σ Waiting Time / Number of Processes
+                </div>
+
+                <h3>Average Turnaround Time</h3>
+
+                <p>
+                    It represents the average total time taken by all processes
+                    from arrival to completion.
+                </p>
+
+                <div class="formula">
+                    Average Turnaround Time =
+                    Σ Turnaround Time / Number of Processes
+                </div>
+
+                <h3>Throughput</h3>
+
+                <p>
+                    Throughput represents how many processes are completed during
+                    a given execution interval.
+                </p>
+
+                <div class="formula">
+                    Throughput =
+                    Number of Processes /
+                    (Last Completion Time − First Arrival Time)
+                </div>
+            </div>
+            <div class="theory-card">
+                <h2>12. Comparison of Scheduling Algorithms</h2>
+
+                <table class="theory-table comparison-table">
+                    <tr>
+                        <th>Algorithm</th>
+                        <th>Type</th>
+                        <th>Main Selection Rule</th>
+                        <th>Special Parameter</th>
+                    </tr>
+
+                    <tr>
+                        <td>FCFS</td>
+                        <td>Non-Preemptive</td>
+                        <td>First arrival</td>
+                        <td>None</td>
+                    </tr>
+
+                    <tr>
+                        <td>SJF</td>
+                        <td>Preemptive / Non-Preemptive</td>
+                        <td>Shortest burst / remaining time</td>
+                        <td>None</td>
+                    </tr>
+
+                    <tr>
+                        <td>Round Robin</td>
+                        <td>Preemptive</td>
+                        <td>Fixed time slice</td>
+                        <td>Time Quantum</td>
+                    </tr>
+
+                    <tr>
+                        <td>Priority</td>
+                        <td>Preemptive / Non-Preemptive</td>
+                        <td>Highest priority</td>
+                        <td>Priority</td>
+                    </tr>
+
+                    <tr>
+                        <td>Multilevel Queue</td>
+                        <td>Preemptive between queues</td>
+                        <td>Queue preference</td>
+                        <td>Time Quantum</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="theory-card">
+                <h2>13. Applications of CPU Scheduling</h2>
+
+                <p>
+                    CPU scheduling is an important part of modern operating systems
+                    and computing systems.
+                </p>
+
+                <ul>
+                    <li>
+                        <strong>Operating Systems:</strong>
+                        Determines which process receives CPU time.
+                    </li>
+
+                    <li>
+                        <strong>Multitasking:</strong>
+                        Allows multiple applications to share CPU resources.
+                    </li>
+
+                    <li>
+                        <strong>Time-Sharing Systems:</strong>
+                        Round Robin can provide responsive CPU access to multiple users
+                        and applications.
+                    </li>
+
+                    <li>
+                        <strong>Servers:</strong>
+                        Scheduling affects response time and the number of requests
+                        handled by the system.
+                    </li>
+
+                    <li>
+                        <strong>Real-Time Systems:</strong>
+                        Priority scheduling can give important tasks preference.
+                    </li>
+
+                    <li>
+                        <strong>Cloud Computing:</strong>
+                        Scheduling techniques are used to allocate computing resources
+                        among multiple workloads.
+                    </li>
+                </ul>
+            </div>
+        </div>
+      </div>
+
+      <!-- Procedure -->
+      <div class="container" id="procedure">
+        <div class="title">Procedure</div>
+        <div class="content">
+          <p>
+            The following steps show how to simulate and analyze CPU scheduling
+            algorithms using the web-based simulator.
+          </p>
+
+          <span class="subheading">Steps for CPU Scheduling Simulation</span>
+          <ol>
+            <li>Select an algorithm from the "Scheduling Algorithm" dropdown (FCFS, SJF, Round Robin, Priority, or Multilevel Queue).</li>
+                <li>Choose a mode (only appears for SJF and Priority): select "Non‑Preemptive" or "Preemptive" using the radio buttons.</li>
+                <li>Enter the Time Quantum (only appears for Round Robin and Multilevel Queue) — this is how long each turn on the CPU lasts before a process is moved to the back of the queue.</li>
+                <li>
+                Click "Add Process" to open the process form and enter:
+                <ul class="sub-list">
+                    <li>Arrival Time – when the process becomes ready.</li>
+                    <li>Burst Time – total CPU time it needs.</li>
+                    <li>Priority – only shown for Priority scheduling (lower number = higher priority).</li>
+                    <li>Queue Type – only shown for Multilevel Queue (<code>0</code> = goes into the Round Robin queue, <code>1</code> = goes into the FCFS queue).</li>
+                    <li>Process Color – used to identify the process in the Gantt chart and animation.</li>
+                </ul>
+                </li>
+                <li>Repeat step 4 for every process you want to test (at least 2–3 processes are recommended so scheduling differences are visible).</li>
+                <li>Click Submit to run the algorithm. The live animation begins automatically, showing processes moving through Ready → CPU → (Waiting →) Terminated, with a Gantt chart building up in real time.</li>
+                <li>Use the Play/Pause, Restart, Stop, and Speed slider controls to control the animation.</li>
+                <li>Once the animation completes, the final Gantt chart, the result table (Arrival, Burst, Completion, Waiting, Turnaround for every process), and the performance metrics appear below.</li>
+                <li>Click Clear All to remove all processes and start a fresh comparison, e.g. to run the same processes under a different algorithm.</li>
+                <li>Click Back to Home to return to the index page of the V‑Lab.</li>
+          </ol>
+
+        </div>
+      </div>
+
+      <!-- Code -->
+      <div class="container" id="code">
+        <div class="title">Code</div>
+        <p>Below is the scheduling logic for each algorithm (FCFS, SJF, Priority, Round Robin, and Multilevel Queue).</p>
+        <div class="switch-container">
+          <input class="togswt" type="radio" id="cppRadio" name="codeSwitch" checked />
+          <label for="cppRadio">JavaScript</label>
+        </div>
+
+        <div class="code-blocks">
+          <div id="cppCode" class="code-block active">
+            <div class="code-content">
+              <pre><code class="language-cpp">if (algo === 'SJF' &amp;&amp; isPreemptive) {
+                while (completed &lt; n) {
+                    const available = pList.filter(p =&gt; p.arrival &lt;= time &amp;&amp; p.remaining &gt; 0);
+                    if (available.length === 0) {
+                    time = +(time + 0.1).toFixed(1);
+                    continue;
+                    }
+                    available.sort((a, b) =&gt; a.remaining - b.remaining);
+                    const current = available[0];
+                    current.remaining = +(current.remaining - 0.1).toFixed(1);
+                    time = +(time + 0.1).toFixed(1);
+
+                    if (Math.abs(current.remaining) &lt; 1e-9) {
+                    logCompletion(current);
+                    completed++;
+                    }
+                }
+                } else if (algo === 'SJF') {
+                const remaining = [...pList];
+                while (completed &lt; n) {
+                    const ready = remaining.filter(p =&gt; p.arrival &lt;= time);
+                    if (ready.length === 0) {
+                    time = +(time + 0.1).toFixed(1);
+                    continue;
+                    }
+                    ready.sort((a, b) =&gt; a.burst - b.burst);
+                    const current = ready[0];
+                    time = Math.max(time, current.arrival);
+                    time = +(time + current.burst).toFixed(2);
+                    logCompletion(current);
+                    completed++;
+                    remaining.splice(remaining.indexOf(current), 1);
+                }
+                } else if (algo === 'FCFS') {
+                pList.sort((a, b) =&gt; a.arrival - b.arrival);
+                for (const p of pList) {
+                    if (time &lt; p.arrival) {
+                    time = p.arrival;
+                    }
+                    time = +(time + p.burst).toFixed(2);
+                    logCompletion(p);
+                }
+                } else if (algo === 'Priority' &amp;&amp; isPreemptive) {
+                while (completed &lt; n) {
+                    const available = pList.filter(p =&gt; p.arrival &lt;= time &amp;&amp; p.remaining &gt; 0);
+                    if (available.length === 0) {
+                    time = +(time + 0.1).toFixed(1);
+                    continue;
+                    }
+                    available.sort((a, b) =&gt; a.priority - b.priority);
+                    const current = available[0];
+                    current.remaining = +(current.remaining - 0.1).toFixed(1);
+                    time = +(time + 0.1).toFixed(1);
+
+                    if (Math.abs(current.remaining) &lt; 1e-9) {
+                    logCompletion(current);
+                    completed++;
+                    }
+                }
+                } else if (algo === 'Priority') {
+                while (completed &lt; n) {
+                    const available = pList.filter(p =&gt; p.arrival &lt;= time &amp;&amp; p.remaining &gt; 0);
+                    if (available.length === 0) {
+                    time = +(time + 0.1).toFixed(1);
+                    continue;
+                    }
+                    available.sort((a, b) =&gt; a.priority - b.priority);
+                    const current = available[0];
+                    time = Math.max(time, current.arrival);
+                    time = +(time + current.burst).toFixed(2);
+                    current.remaining = 0;
+                    logCompletion(current);
+                    completed++;
+                }
+                } else if (algo === 'Round Robin') {
+                if (isNaN(quantum) || quantum &lt;= 0) return alert("Enter valid quantum");
+                const readyQueue = [];
+                let currentTime = 0;
+                let completedRR = 0;
+                const arrived = new Set();
+                while (completedRR &lt; n) {
+                    pList.forEach(p =&gt; {
+                    if (p.arrival &lt;= currentTime &amp;&amp; p.remaining &gt; 0 &amp;&amp; !arrived.has(p)) {
+                        readyQueue.push(p);
+                        arrived.add(p);
+                    }
+                    });
+                    if (readyQueue.length === 0) {
+                    const nextArrival = Math.min(...pList.filter(p =&gt; p.remaining &gt; 0).map(p =&gt; p.arrival));
+                    if (nextArrival &gt; currentTime) currentTime = nextArrival;
+                    continue;
+                    }
+                    const current = readyQueue.shift();
+                    if (current.remaining &lt;= 0) continue;
+
+                    const slice = Math.min(quantum, current.remaining);
+                    current.remaining = +(current.remaining - slice).toFixed(2);
+                    currentTime = +(currentTime + slice).toFixed(2);
+                    time = currentTime;
+
+                    pList.forEach(p =&gt; {
+                    if (p.arrival &gt; currentTime - slice &amp;&amp; p.arrival &lt;= currentTime &amp;&amp; p.remaining &gt; 0 &amp;&amp; !arrived.has(p)) {
+                        readyQueue.push(p);
+                        arrived.add(p);
+                    }
+                    });
+
+                    if (current.remaining &gt; 0) {
+                    readyQueue.push(current);
+                    } else {
+                    logCompletion(current);
+                    completedRR++;
+                    }
+                }
+                completed = completedRR;
+                } else if (algo === 'Multilevel') {
+                if (isNaN(quantum) || quantum &lt;= 0) return alert("Enter valid quantum for Queue 0");
+                const queue0 = pList.filter(p =&gt; p.queueType === 0);
+                const queue1 = pList.filter(p =&gt; p.queueType === 1);
+                let currentTime = 0; let completedML = 0;
+                const totalProcesses = pList.length;
+                const rrQueue = []; const fcfsQueue = [];
+                const getReady = (queue) =&gt; queue.filter(p =&gt; p.arrival &lt;= currentTime &amp;&amp; p.remaining &gt; 0);
+
+                while (completedML &lt; totalProcesses) {
+                    queue0.forEach(p =&gt; {
+                    if (p.arrival &lt;= currentTime &amp;&amp; p.remaining &gt; 0 &amp;&amp; !rrQueue.includes(p)) rrQueue.push(p);
+                    });
+
+                    if (rrQueue.length &gt; 0) {
+                    const current = rrQueue.shift();
+                    const execTime = Math.min(current.remaining, quantum);
+                    current.remaining -= execTime; currentTime += execTime;
+
+                    if (current.remaining &gt; 0) {
+                        rrQueue.push(current);
+                    } else {
+                        current.completion = currentTime;
+                        logCompletion(current);
+                        completedML++;
+                    }
+                    } else {
+                    const readyQ1 = getReady(queue1);
+                    if (fcfsQueue.length === 0 &amp;&amp; readyQ1.length &gt; 0) {
+                        fcfsQueue.push(...readyQ1.sort((a, b) =&gt; a.arrival - b.arrival));
+                    }
+                    const current = fcfsQueue[0];
+                    if (current) {
+                        const execTime = Math.min(current.remaining, 1);
+                        current.remaining -= execTime; currentTime += execTime;
+
+                        if (getReady(queue0).length &gt; 0) continue;
+
+                        if (current.remaining &lt;= 0) {
+                        current.completion = currentTime;
+                        logCompletion(current);
+                        fcfsQueue.shift(); completedML++;
+                        }
+                    } else {
+                        currentTime += 1;
+                    }
+                    }
+                }
+                completed = completedML;
+                }</code></pre>
+              <button class="copy-button">Copy</button>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- Practice -->
+      <div class="container" id="practice">
+        <div class="title">Practice</div>
+        <div class="content">
+            <p class="intro">
+            Try the problems below by hand first, then enter the same processes into the simulator
+            and check that your numbers match. All example values below were solved using the exact
+            same logic your simulator uses, so they are safe to use as an answer key.
+        </p>
+
+        <!-- Practice 1 -->
+        <div class="practice-block">
+            <div class="practice-title">Practice 1 — FCFS</div>
+            <table class="process-table">
+            <tr><th>Process</th><th>Arrival</th><th>Burst</th></tr>
+            <tr><td>P1</td><td>0</td><td>5</td></tr>
+            <tr><td>P2</td><td>1</td><td>3</td></tr>
+            <tr><td>P3</td><td>2</td><td>8</td></tr>
+            </table>
+            <div class="expected">
+            <p><strong>Expected Gantt chart:</strong> P1 (0–5) → P2 (5–8) → P3 (8–16)</p>
+            <p><strong>Expected results:</strong> Avg Waiting Time = 3.33, Avg Turnaround Time = 8.67</p>
+            </div>
+        </div>
+
+        <!-- Practice 2 -->
+        <div class="practice-block">
+            <div class="practice-title">Practice 2 — SJF (Non‑Preemptive)</div>
+            <table class="process-table">
+            <tr><th>Process</th><th>Arrival</th><th>Burst</th></tr>
+            <tr><td>P1</td><td>0</td><td>6</td></tr>
+            <tr><td>P2</td><td>1</td><td>2</td></tr>
+            <tr><td>P3</td><td>2</td><td>8</td></tr>
+            <tr><td>P4</td><td>3</td><td>3</td></tr>
+            </table>
+            <div class="expected">
+            <p><strong>Expected Gantt chart:</strong> P1 (0–6) → P2 (6–8) → P4 (8–11) → P3 (11–19)</p>
+            <p><strong>Expected results:</strong> Avg Waiting Time = 4.75, Avg Turnaround Time = 9.50</p>
+            </div>
+        </div>
+
+        <!-- Practice 3 -->
+        <div class="practice-block">
+            <div class="practice-title">Practice 3 — SJF (Preemptive / SRTF)</div>
+            <table class="process-table">
+            <tr><th>Process</th><th>Arrival</th><th>Burst</th></tr>
+            <tr><td>P1</td><td>0</td><td>8</td></tr>
+            <tr><td>P2</td><td>1</td><td>4</td></tr>
+            <tr><td>P3</td><td>2</td><td>9</td></tr>
+            <tr><td>P4</td><td>3</td><td>5</td></tr>
+            </table>
+            <div class="expected">
+            <p><strong>Expected Gantt chart:</strong> P1 (0–1) → P2 (1–5) → P4 (5–10) → P1 (10–17) → P3 (17–26)</p>
+            <p><strong>Expected results:</strong> Avg Waiting Time = 6.50, Avg Turnaround Time = 13.00</p>
+            </div>
+        </div>
+
+        <!-- Practice 4 -->
+        <div class="practice-block">
+            <div class="practice-title">Practice 4 — Priority (Non‑Preemptive, lower number = higher priority)</div>
+            <table class="process-table">
+            <tr><th>Process</th><th>Arrival</th><th>Burst</th><th>Priority</th></tr>
+            <tr><td>P1</td><td>0</td><td>5</td><td>3</td></tr>
+            <tr><td>P2</td><td>1</td><td>3</td><td>1</td></tr>
+            <tr><td>P3</td><td>2</td><td>8</td><td>4</td></tr>
+            <tr><td>P4</td><td>3</td><td>6</td><td>2</td></tr>
+            </table>
+            <div class="expected">
+            <p><strong>Expected Gantt chart:</strong> P1 (0–5) → P2 (5–8) → P4 (8–14) → P3 (14–22)</p>
+            <p><strong>Expected results:</strong> Avg Waiting Time = 5.25, Avg Turnaround Time = 10.75</p>
+            </div>
+        </div>
+
+        <!-- Practice 5 -->
+        <div class="practice-block">
+            <div class="practice-title">Practice 5 — Round Robin (Quantum = 4)</div>
+            <table class="process-table">
+            <tr><th>Process</th><th>Arrival</th><th>Burst</th></tr>
+            <tr><td>P1</td><td>0</td><td>5</td></tr>
+            <tr><td>P2</td><td>1</td><td>4</td></tr>
+            <tr><td>P3</td><td>2</td><td>2</td></tr>
+            </table>
+            <div class="expected">
+            <p><strong>Expected Gantt chart:</strong> P1 (0–4) → P2 (4–8) → P3 (8–10) → P1 (10–11)</p>
+            <p><strong>Expected results:</strong> Avg Waiting Time = 5.00, Avg Turnaround Time = 8.67</p>
+            </div>
+        </div>
+
+        <!-- Practice 6 -->
+        <div class="practice-block">
+            <div class="practice-title">Practice 6 — Multilevel Queue (Quantum = 2)</div>
+            <table class="process-table">
+            <tr><th>Process</th><th>Arrival</th><th>Burst</th><th>Queue Type</th></tr>
+            <tr><td>P1</td><td>0</td><td>4</td><td>0 (RR)</td></tr>
+            <tr><td>P2</td><td>1</td><td>3</td><td>0 (RR)</td></tr>
+            <tr><td>P3</td><td>0</td><td>5</td><td>1 (FCFS)</td></tr>
+            </table>
+            <p class="note-text">
+            Since Queue 0 (RR) always has strict priority here, P1 and P2 will finish completely
+            in the Round Robin queue first (taking turns of 2 units each), and
+            <strong>only after both are done</strong> will P3 get any CPU time in the FCFS queue.
+            Run this one directly in the simulator and use the live animation to observe how P3
+            keeps getting "starved" until Queue 0 is empty — this is the key behavior to
+            understand about this Multilevel Queue design (it favors Queue 0 completely and
+            never lets Queue 1 preempt it back).
+            </p>
+        </div>
+
+        <button class="back-home" onclick="location.href='main_simulation_page.html'">Open Simulator</button>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="container" id="result">
+        <div class="title">Result</div>
+        <div class="content">
+            <p>After a simulation finishes, you will see:</p>
+
+            <ol>
+                <li>
+                <strong>Final Gantt Chart</strong> — a horizontal bar chart where each colored block represents a process running on the CPU for a certain duration; the numbers under the chart mark the time at which each block starts.
+                </li>
+                <li>
+                <strong>Result Table</strong> — one row per process, showing:
+                <ul>
+                    <li><strong>PID</strong> — process identifier</li>
+                    <li><strong>Arrival</strong> and <strong>Burst</strong> — the values you entered</li>
+                    <li><strong>Completion</strong> — the time it finished</li>
+                    <li><strong>Waiting</strong> and <strong>Turnaround</strong> — calculated as explained in Section 2.3</li>
+                </ul>
+                </li>
+                <li>
+                <strong>Metrics box</strong>:
+                <ul>
+                    <li><strong>Average Waiting Time</strong> — lower is generally better; it tells you how long processes typically sat idle in the ready queue.</li>
+                    <li><strong>Average Turnaround Time</strong> — lower is generally better; it tells you the typical total time from a process's arrival to its completion.</li>
+                    <li><strong>Throughput</strong> — higher is generally better; it tells you how many processes the system completes per unit of time.</li>
+                </ul>
+                </li>
+            </ol>
+
+            <p>
+                Use the same set of processes across different algorithms (just change the dropdown and click Submit again)
+                to directly compare these three numbers and see, empirically, why algorithms like SRTF tend to minimize
+                average waiting time while FCFS is simplest but can perform worst under the convoy effect.
+            </p>
+
+        </div>
+      </div>
+
+         <!-- Quiz -->
+        <div class="container" id="quiz">
+            <div class="title">Quiz</div>
+
+            <!-- Quiz Instructions -->
+            <div id="quiz-instructions">
+            <h3>CPU Scheduling Simulator – Quiz Instructions</h3>
+            <ul>
+                <li>Read each question carefully before answering.</li>
+                <li>Each question has only one correct answer.</li>
+                <li>Select the correct option to enable the <b>Next</b> button.</li>
+                <li>Click <b>Next</b> to move to the following question.</li>
+                <li>At the end, you can view your quiz report and retake the quiz if needed.</li>
+            </ul>
+            <button id="start-quiz-btn" class="start-button">Start Quiz</button>
+            </div>
+
+            <!-- Quiz Questions Section (Initially Hidden) -->
+            <div id="quiz-content" style="display: none;">
+            <div id="progress"></div>
+            <p id="question"></p>
+            <div id="choices" class="choices"></div>
+            <button id="next-btn" class="quiz-button" disabled>Next</button>
+
+            <div id="quiz-report" style="display: none"></div>
+            <button id="retake-btn" style="display: none">Retake Quiz</button>
+            <button class="quiz-button" id="see-answers-btn" style="display: none">See Answers</button>
+            </div>
+
+        </div>
+
+
+      <!-- References -->
+      <div class="container" id="references">
+        <div class="title">References</div>
+        <div class="content">
+             <ul class="ref-list">
+                <li><span>Silberschatz, A., Galvin, P. B., &amp; Gagne, G. — <i>Operating System Concepts</i> (chapter on CPU Scheduling)</span></li>
+                <li><span>Stallings, W. — <i>Operating Systems: Internals and Design Principles</i> (chapter on Uniprocessor Scheduling)</span></li>
+                <li><span>Andrew S. Tanenbaum, <i>Modern Operating Systems</i></span></li>
+                <li><span>NPTEL / IIT lecture material on Operating Systems and CPU Scheduling</span></li>
+                <li><span>Standard Virtual Labs (Ministry of Education, India) Operating Systems lab modules, for the overall lab format this simulator follows</span></li>
+                <li><span>Jon Duckett, <i>HTML and CSS: Design and Build Websites</i>, Wiley</span></li>
+            </ul>
+        </div>
+      </div>
+
+      <!-- Team & Tools -->
+      <div class="container" id="tnt">
+        <div class="title">Team & Tools</div>
+        <div class="content">
+          <h3>Students</h3>
+          <ul class="ref-list">
+            <li>
+              <a href="https://github.com/Nikhil1008Kumar" rel="noopener" target="_blank"><span>Nikhil Kumar, IVth year B.Sc. (Prog.) Computer Science</span></a>
+            </li>
+            <li>
+              <a href="https://github.com/Ommauryya" rel="noopener" target="_blank"><span>Om Maurya, IVth year B.Sc. (Prog.) Computer Science</span></a>
+            </li>
+          </ul>
+          <h3>Mentors</h3>
+          <ul class="ref-list">
+            <li><span> Ms. Shiva Saini, Department of Computer Science</span></li>
+          </ul>
+          <h3>Tools Used</h3>
+          <ul class="ref-list">
+            <li>
+              <span>Vanilla HTML, CSS, JS - for creating the web page</span>
+            </li>
+          </ul>
+          <h3>Institution</h3>
+          <ul class="ref-list">
+            <li>
+              <span>Acharya Narendra Dev College (ANDC), University of Delhi — V‑Lab@ANDC initiative.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+    hljs.highlightAll();
+    function toggleMenu() {
+      const menu = document.querySelector(".nav-menu");
+      menu.classList.toggle("show");
+    }
+  </script>
+  <script src="script.js"></script>
+</body>
+
+</html>

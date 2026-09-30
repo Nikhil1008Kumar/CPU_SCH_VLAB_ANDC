@@ -64,15 +64,15 @@ cpu-scheduling-vlab/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/<your-repo-name>.git
-cd <your-repo-name>
+git clone https://github.com/Nikhil1008Kumar/CPU_SCH_VLAB_ANDC.git
+cd Nikhil1008Kumar/CPU_SCH_VLAB_ANDC
 ```
 
 or
 
 ### 2. Download ZIP [not recommended]
 
-[Download the latest release as ZIP](https://github.com/<your-username>/<your-repo-name>/archive/refs/heads/main.zip)
+[Download the latest release as ZIP](https://github.com/Nikhil1008Kumar/CPU_SCH_VLAB_ANDC.git)
 
 ### 3. Extract & Open
 
@@ -132,6 +132,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## Need Help?
-
-Open an [issue](https://github.com/<your-username>/<your-repo-name>/issues) and we'll be happy to help!

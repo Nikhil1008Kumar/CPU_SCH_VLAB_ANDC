@@ -230,12 +230,12 @@
                 </div>
 
                 <p>
-                    In this simulator, non-preemptive scheduling is used by:
+                    Non-preemptive scheduling is used by:
                 </p>
 
                 <ul>
-                    <li>FCFS</li>
-                    <li>SJF Non-Preemptive</li>
+                    <li>First Come, First Serve (FCFS)</li>
+                    <li>Shortest Job First (SJF) Non-Preemptive</li>
                     <li>Priority Non-Preemptive</li>
                     <li>Queue 1 of Multilevel Queue</li>
                 </ul>
@@ -244,8 +244,8 @@
                 <h3>Preemptive Scheduling</h3>
 
                 <p>
-                    In preemptive scheduling, a running process can be interrupted
-                    before completing its CPU burst. The CPU can then be assigned
+                    A running process can be interrupted
+                    before completing its CPU burst. The CPU is then assigned
                     to another process.
                 </p>
 
@@ -255,11 +255,11 @@
                 </p>
 
                 <p>
-                    In this simulator, preemptive scheduling is used by:
+                    Preemptive scheduling is used by:
                 </p>
 
                 <ul>
-                    <li>SJF Preemptive</li>
+                    <li>Shortest Job First (SJF) Preemptive</li>
                     <li>Priority Preemptive</li>
                     <li>Round Robin</li>
                     <li>Queue 0 of Multilevel Queue</li>
@@ -313,12 +313,18 @@
                     </tr>
                 </table>
 
-                <div class="gantt-example">
-                    | P1 | P2 | P3 |
-                    <br>
-                    0 &nbsp;&nbsp; 5 &nbsp;&nbsp; 8 &nbsp;&nbsp; 10
-                </div>
-
+                <table class="gantt-table">
+                    <tr>
+                        <td>P1</td>
+                        <td>P2</td>
+                        <td>P3</td>
+                    </tr>
+                    <tr class="time-row">
+                        <td><span class="t t-first">0</span></td>
+                        <td><span class="t">5</span></td>
+                        <td><span class="t">8</span><span class="t t-last">10</span></td>
+                    </tr>
+                </table>
                 <p>
                     Since P1 arrives first, it executes first. After P1 completes,
                     P2 executes, followed by P3.
@@ -614,11 +620,18 @@
                     the CPU at a particular time.
                 </p>
 
-                <div class="gantt-example">
-                    | P1 | P2 | P3 |
-                    <br>
-                    0 &nbsp;&nbsp; 5 &nbsp;&nbsp; 8 &nbsp;&nbsp; 10
-                </div>
+                <table class="gantt-table">
+                    <tr>
+                        <td>P1</td>
+                        <td>P2</td>
+                        <td>P3</td>
+                    </tr>
+                    <tr class="time-row">
+                        <td><span class="t t-first">0</span></td>
+                        <td><span class="t">5</span></td>
+                        <td><span class="t">8</span><span class="t t-last">10</span></td>
+                    </tr>
+                </table>
 
                 <p>
                     From this chart:
@@ -937,56 +950,139 @@
                     }
                 }
                 completed = completedRR;
-                } else if (algo === 'Multilevel') {
-                if (isNaN(quantum) || quantum &lt;= 0) return alert("Enter valid quantum for Queue 0");
-                const queue0 = pList.filter(p =&gt; p.queueType === 0);
-                const queue1 = pList.filter(p =&gt; p.queueType === 1);
-                let currentTime = 0; let completedML = 0;
+                } 
+                else if (algo === 'Multilevel') {
+                if (isNaN(quantum) || quantum <= 0) {
+                return alert("Enter valid quantum for Queue 0");
+                }
+
+                const queue0 = pList
+                    .filter(p => Number(p.queueType) === 0)
+                    .sort((a, b) => a.arrival - b.arrival || a.id - b.id);
+
+                const queue1 = pList
+                    .filter(p => Number(p.queueType) === 1)
+                    .sort((a, b) => a.arrival - b.arrival || a.id - b.id);
+
+                pList.forEach(p => {
+                    p.remaining = Number(p.burst);
+                });
+
+                let currentTime = 0;
+                let completedML = 0;
                 const totalProcesses = pList.length;
-                const rrQueue = []; const fcfsQueue = [];
-                const getReady = (queue) =&gt; queue.filter(p =&gt; p.arrival &lt;= currentTime &amp;&amp; p.remaining &gt; 0);
 
-                while (completedML &lt; totalProcesses) {
-                    queue0.forEach(p =&gt; {
-                    if (p.arrival &lt;= currentTime &amp;&amp; p.remaining &gt; 0 &amp;&amp; !rrQueue.includes(p)) rrQueue.push(p);
-                    });
+                const rrQueue = [];
+                let rrIndex = 0;
+                let fcfsIndex = 0;
 
-                    if (rrQueue.length &gt; 0) {
-                    const current = rrQueue.shift();
-                    const execTime = Math.min(current.remaining, quantum);
-                    current.remaining -= execTime; currentTime += execTime;
-
-                    if (current.remaining &gt; 0) {
-                        rrQueue.push(current);
-                    } else {
-                        current.completion = currentTime;
-                        logCompletion(current);
-                        completedML++;
+                const EPS = 1e-9;
+                function addRRProcesses() {
+                    while (rrIndex < queue0.length && queue0[rrIndex].arrival <= currentTime + EPS) 
+                    {
+                        rrQueue.push(queue0[rrIndex]);
+                        rrIndex++;
                     }
+                }
+                function addGantt(process, duration, queueType) {
+                    if (duration <= EPS) return;
+
+                    const id = `P${process.id}`;
+                    const last = ganttLog[ganttLog.length - 1];
+                    if (
+                        last &&
+                        last.id === id &&
+                        last.queue === queueType
+                    ) {
+                        last.duration += duration;
                     } else {
-                    const readyQ1 = getReady(queue1);
-                    if (fcfsQueue.length === 0 &amp;&amp; readyQ1.length &gt; 0) {
-                        fcfsQueue.push(...readyQ1.sort((a, b) =&gt; a.arrival - b.arrival));
+                        ganttLog.push({
+                            id: id,
+                            color: process.color,
+                            duration: duration,
+                            queue: queueType
+                        });
                     }
-                    const current = fcfsQueue[0];
-                    if (current) {
-                        const execTime = Math.min(current.remaining, 1);
-                        current.remaining -= execTime; currentTime += execTime;
-
-                        if (getReady(queue0).length &gt; 0) continue;
-
-                        if (current.remaining &lt;= 0) {
-                        current.completion = currentTime;
-                        logCompletion(current);
-                        fcfsQueue.shift(); completedML++;
+                }
+                function finishProcess(process) {
+                    process.remaining = 0;
+                    process.completion = +currentTime.toFixed(2);
+                    process.turnaround = +(    process.completion - process.arrival).toFixed(2);
+                    process.waiting = +(process.turnaround - process.burst ).toFixed(2);
+                    totalWaiting += process.waiting;
+                    totalTurnaround += process.turnaround;
+                    table.push(process);
+                    completedML++;
+                }
+                while (completedML < totalProcesses) {
+                    addRRProcesses();
+                    if (rrQueue.length > 0) {const current = rrQueue.shift();
+                        const execTime = Math.min(current.remaining, quantum);
+                        addGantt(current, execTime, 0);
+                        current.remaining -= execTime;
+                        currentTime += execTime;
+                        if (current.remaining < EPS) {
+                            current.remaining = 0;
                         }
-                    } else {
-                        currentTime += 1;
+                        addRRProcesses();
+                        if (current.remaining > 0) {
+                            rrQueue.push(current);
+                        } else {
+                            finishProcess(current);
+                        }
                     }
+                    else if (
+                        fcfsIndex < queue1.length && queue1[fcfsIndex].arrival <= currentTime + EPS
+                    ) {
+                        const current = queue1[fcfsIndex];
+                        const nextRR =
+                            rrIndex < queue0.length
+                                ? queue0[rrIndex].arrival
+                                : Infinity;
+                        const execTime = Math.min(
+                            current.remaining,
+                            Math.max(0, nextRR - currentTime)
+                        );
+                        if (execTime > EPS) {
+                            addGantt(current, execTime, 1);
+                            current.remaining -= execTime;
+                            currentTime += execTime;
+                            if (current.remaining < EPS) {
+                                current.remaining = 0;
+                            }
+                            if (current.remaining === 0) {
+                                finishProcess(current);
+                                fcfsIndex++;
+                            }
+                        }
+                    }
+                    else {
+                        const nextRR =
+                            rrIndex < queue0.length ? queue0[rrIndex].arrival : Infinity;
+                        const nextFCFS = fcfsIndex < queue1.length ? queue1[fcfsIndex].arrival : Infinity;
+                        const nextArrival = Math.min(nextRR,nextFCFS);
+                        if (!Number.isFinite(nextArrival)) {
+                            break;
+                        }
+                        const idleTime = nextArrival - currentTime;
+                        if (idleTime > EPS) {
+                            const last = ganttLog[ganttLog.length - 1];
+                            if (last && last.id === 'Idle') {
+                                last.duration += idleTime;
+                            } else {
+                                ganttLog.push({
+                                    id: 'Idle',
+                                    color: '#ccc',
+                                    duration: idleTime
+                                });
+                            }
+                        }
+                        currentTime = nextArrival;
                     }
                 }
                 completed = completedML;
-                }</code></pre>
+            }
+</code></pre>
               <button class="copy-button">Copy</button>
             </div>
           </div>
@@ -1180,14 +1276,13 @@
       <div class="container" id="references">
         <div class="title">References</div>
         <div class="content">
-             <ul class="ref-list">
-                <li><span>Silberschatz, A., Galvin, P. B., &amp; Gagne, G. — <i>Operating System Concepts</i> (chapter on CPU Scheduling)</span></li>
-                <li><span>Stallings, W. — <i>Operating Systems: Internals and Design Principles</i> (chapter on Uniprocessor Scheduling)</span></li>
-                <li><span>Andrew S. Tanenbaum, <i>Modern Operating Systems</i></span></li>
-                <li><span>NPTEL / IIT lecture material on Operating Systems and CPU Scheduling</span></li>
-                <li><span>Standard Virtual Labs (Ministry of Education, India) Operating Systems lab modules, for the overall lab format this simulator follows</span></li>
-                <li><span>Jon Duckett, <i>HTML and CSS: Design and Build Websites</i>, Wiley</span></li>
-            </ul>
+        <ul class="ref-list">
+            <li><span><a href="https://os.ecci.ucr.ac.cr/slides/Abraham-Silberschatz-Operating-System-Concepts-10th-2018.pdf" rel="noopener" target="_blank"> Silberschatz, A., Galvin, P. B., &amp; Gagne, G. (2018). Operating System Concepts (10th ed.). Wiley. </a></span></li>
+            <li><span><a href="https://os.ecci.ucr.ac.cr/slides/Andrew-S.-Tanenbaum-Modern-Operating-Systems.pdf" rel="noopener" target="_blank"> Tanenbaum, A. S., &amp; Bos, H. (2015). Modern Operating Systems (4th ed.). Pearson. </a></span></li>
+            <li><span> NPTEL. (n.d.). Operating Systems and CPU Scheduling lecture material. Retrieved October 13, 2026, from <a href="https://nptel.ac.in/" rel="noopener" target="_blank">https://nptel.ac.in/</a></span></li>
+            <li><span> Virtual Labs, Ministry of Education, Government of India. (n.d.). Operating Systems lab modules. Retrieved October 13, 2026, from <a href="https://www.vlab.co.in/" rel="noopener" target="_blank">https://www.vlab.co.in/</a></span></li>
+            <li><span><a href="https://www.dcpehvpm.org/E-Content/BCA/BCA-II/Web%20Technology/HTML%20and%20CSS%20design%20and%20build%20websites.pdf" rel="noopener" target="_blank"> Duckett, J. (2011). HTML and CSS: Design and Build Websites Wiley.</a></span></li>
+        </ul>
         </div>
       </div>
 
@@ -1198,14 +1293,15 @@
           <h3>Students</h3>
           <ul class="ref-list">
             <li>
-              <a href="https://github.com/Nikhil1008Kumar" rel="noopener" target="_blank"><span>Nikhil Kumar, IVth year B.Sc. (Prog.) Computer Science</span></a>
+              <a href="https://github.com/Nikhil1008Kumar" rel="noopener" target="_blank"><span>Nikhil Kumar, 4th year B.Sc. (Prog.) Computer Science (2026-2027)</span></a>
             </li>
             <li>
-              <a href="https://github.com/Ommauryya" rel="noopener" target="_blank"><span>Om Maurya, IVth year B.Sc. (Prog.) Computer Science</span></a>
+              <a href="https://github.com/Ommauryya" rel="noopener" target="_blank"><span>Om Maurya, 4th year B.Sc. (Prog.) Computer Science (2026-2027)</span></a>
             </li>
           </ul>
           <h3>Mentors</h3>
           <ul class="ref-list">
+            <li><span> Prof. Sunita Narang, Department of Computer Science</span></li>
             <li><span> Ms. Shiva Saini, Department of Computer Science</span></li>
           </ul>
           <h3>Tools Used</h3>

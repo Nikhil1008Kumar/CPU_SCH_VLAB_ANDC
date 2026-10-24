@@ -242,6 +242,67 @@ body {
   overflow-x: auto;
 }
 
+/* ===== Gantt chart table ===== */
+.gantt-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.5rem auto;
+  border: 2px solid #0b2545;          /* outer line: 2px */
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b2545;
+  box-shadow: 0 4px 14px rgba(11, 37, 69, 0.15);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* process blocks */
+.gantt-table tr:first-child td {
+  min-width: 110px;
+  padding: 0.9rem 1.6rem;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #0b2545;
+  border-right: 2px solid #fff;       /* inner vertical lines: white, 2px */
+  border-bottom: 2px solid #fff;      /* line above the time row: white, 2px */
+}
+
+.gantt-table tr:first-child td:last-child {
+  border-right: none;
+}
+
+/* time row */
+.gantt-table .time-row td {
+  position: relative;
+  height: 34px;
+  padding: 0;
+  background: #f3e7c9;
+}
+
+/* time labels */
+.gantt-table .t {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);   /* centred on the block boundary */
+  font-size: 14px;
+  font-weight: 700;
+  color: #0b2545;
+}
+
+.gantt-table .t-first {               /* first time sits inside the left edge */
+  left: 14px;
+  transform: translateY(-50%);
+}
+
+.gantt-table .t-last {                /* final time sits inside the right edge */
+  left: auto;
+  right: 14px;
+  transform: translateY(-50%);
+}
+
 .theory-table {
   width: 100%;
   border-collapse: collapse;

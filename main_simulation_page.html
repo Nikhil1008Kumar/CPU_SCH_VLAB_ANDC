@@ -696,6 +696,7 @@
       <input type="number" id="modalBurstTime" value="1">
       <div id="priorityInput" style="display:none">
         <label>Priority</label>
+        <label>Note: "Lower Number = Higher Priority"</label>
         <input type="number" id="processPriority" value="1">
       </div>
       <div id="queueInput" style="display: none;">
@@ -764,7 +765,8 @@
       const algo = document.getElementById('algorithm').value;
 
       const priority = algo === 'Priority' ? parseInt(document.getElementById('processPriority').value) : null;
-      if (!isNaN(arrival) && !isNaN(burst)) {
+      if (Number.isFinite(arrival) && arrival >= 0 && Number.isFinite(burst) && burst > 0 &&
+          (algo !== 'Priority' || Number.isFinite(priority))) {
         const queueType = algo === 'Multilevel' ? parseInt(document.getElementById('queueType').value) : null;
         processes.push({ id: processes.length + 1, arrival, burst, color, priority, queueType, remaining: burst, startTime: undefined, responseTime: 0 });
         renderProcessList();
@@ -802,31 +804,12 @@
     }
 
     function mergeGanttBlocks(log, algo) {
-      if (!log || log.length === 0) return [];
-      const merged = [log[0]];
-      for (let i = 1; i < log.length; i++) {
-        const last = merged[merged.length - 1];
-        const current = log[i];
-        if (algo === 'Multilevel') {
-          if (last.id === current.id && last.color === current.color && last.queue === 1 && current.queue === 1) {
-            last.duration = +(last.duration + current.duration).toFixed(2);
-          } else {
-            merged.push(current);
-          }
-        } else if (algo !== 'Round Robin') {
-          if (last.id === current.id && last.color === current.color) {
-            last.duration = +(last.duration + current.duration).toFixed(2);
-          } else {
-            merged.push(current);
-          }
-        } else {
-          merged.push(current);
-        }
-      }
-      return merged;
+      // All scheduling branches record their intended segments directly.
+      // In particular, never merge RR time-quantum boundaries.
+      return log.map(block => ({ ...block }));
     }
 
-    // ---------- Scheduling engine (bug-fixed FCFS/RR/Multilevel logic) ----------
+    // ---------- Scheduling algo (FCFS/RR/Multilevel logic) ----------
     function submitSimulation() {
       stopSimulation(); // halt any running animation before recomputing
 
@@ -840,11 +823,30 @@
         return;
       }
 
-      const pList = processes.map(p => ({ ...p, remaining: p.burst }));
+      if (processes.some(p => !Number.isFinite(Number(p.arrival)) ||
+          !Number.isFinite(Number(p.burst)) || Number(p.arrival) < 0 || Number(p.burst) <= 0)) {
+        alert('Each process needs a nonnegative arrival and positive burst time.'); return;
+      }
+      const pList = processes.map(p => ({
+        ...p, arrival: Number(p.arrival), burst: Number(p.burst),
+        remaining: Number(p.burst)
+      }));
       let time = 0, completed = 0;
       const ganttLog = [];
       let table = [];
       let totalWaiting = 0, totalTurnaround = 0;
+
+      function recordBlock(process, duration, queue, merge = true) {
+        if (duration <= 1e-9) return;
+        const id = process ? `P${process.id}` : 'Idle';
+        const color = process ? process.color : '#ccc';
+        const last = ganttLog[ganttLog.length - 1];
+        if (merge && last && last.id === id && last.queue === queue) {
+          last.duration = +(last.duration + duration).toFixed(10);
+        } else {
+          ganttLog.push({ id, color, duration: +duration.toFixed(10), queue });
+        }
+      }
 
       function logCompletion(p) {
         p.completion = time;
@@ -855,45 +857,82 @@
         table.push(p);
       }
 
+      // SJF tie-break: shortest remaining/burst time, then earliest arrival,
+      // then lowest numeric process ID. Continue the running process on an
+      // exact remaining-time tie to avoid unnecessary context switches.
       if (algo === 'SJF' && isPreemptive) {
+        const EPS = 1e-9;
+        let running = null;
+
+        function recordSJF(p, duration) {
+          if (duration <= EPS) return;
+          const id = p ? `P${p.id}` : 'Idle';
+          const color = p ? p.color : '#ccc';
+          const last = ganttLog[ganttLog.length - 1];
+          if (last && last.id === id) {
+            last.duration = +(last.duration + duration).toFixed(10);
+          } else {
+            ganttLog.push({ id, color, duration: +duration.toFixed(10) });
+          }
+        }
+
         while (completed < n) {
-          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
-          if (available.length === 0) {
-            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
-            time = +(time + 0.1).toFixed(1);
+          const ready = pList.filter(p => p.arrival <= time + EPS && p.remaining > EPS);
+          if (!ready.length) {
+            const future = pList.filter(p => p.remaining > EPS);
+            if (!future.length) break;
+            const nextArrival = Math.min(...future.map(p => p.arrival));
+            recordSJF(null, nextArrival - time);
+            time = nextArrival;
+            running = null;
             continue;
           }
-          available.sort((a, b) => a.remaining - b.remaining);
-          const current = available[0];
-          current.remaining = +(current.remaining - 0.1).toFixed(1);
-          time = +(time + 0.1).toFixed(1);
 
-          const last = ganttLog[ganttLog.length - 1];
-          if (last && last.id === `P${current.id}`) {
-            last.duration = +(last.duration + 0.1).toFixed(1);
-          } else {
-            ganttLog.push({ id: `P${current.id}`, color: current.color, duration: 0.1 });
-          }
+          ready.sort((a, b) => {
+            if (Math.abs(a.remaining - b.remaining) > EPS) return a.remaining - b.remaining;
+            if (a === running) return -1;
+            if (b === running) return 1;
+            if (Math.abs(a.arrival - b.arrival) > EPS) return a.arrival - b.arrival;
+            return Number(a.id) - Number(b.id);
+          });
 
-          if (Math.abs(current.remaining) < 1e-9) {
+          const current = ready[0];
+          const futureArrivals = pList.filter(p => p.arrival > time + EPS && p.remaining > EPS);
+          const nextArrival = futureArrivals.length
+            ? Math.min(...futureArrivals.map(p => p.arrival)) : Infinity;
+          const duration = Math.min(current.remaining, nextArrival - time);
+          if (duration <= EPS) throw new Error('SRTF made no scheduling progress');
+
+          recordSJF(current, duration);
+          time = +(time + duration).toFixed(10);
+          current.remaining = +Math.max(0, current.remaining - duration).toFixed(10);
+          running = current;
+
+          if (current.remaining <= EPS) {
+            current.remaining = 0;
             logCompletion(current);
             completed++;
+            running = null;
           }
         }
       } else if (algo === 'SJF') {
+        const EPS = 1e-9;
         const remaining = [...pList];
-        while (completed < n) {
-          const ready = remaining.filter(p => p.arrival <= time);
-          if (ready.length === 0) {
-            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
-            time = +(time + 0.1).toFixed(1);
+        while (remaining.length) {
+          const ready = remaining.filter(p => p.arrival <= time + EPS);
+          if (!ready.length) {
+            const nextArrival = Math.min(...remaining.map(p => p.arrival));
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: nextArrival - time });
+            time = nextArrival;
             continue;
           }
-          ready.sort((a, b) => a.burst - b.burst);
+          ready.sort((a, b) =>
+            a.burst - b.burst || a.arrival - b.arrival || Number(a.id) - Number(b.id)
+          );
           const current = ready[0];
-          time = Math.max(time, current.arrival);
           ganttLog.push({ id: `P${current.id}`, color: current.color, duration: current.burst });
-          time = +(time + current.burst).toFixed(2);
+          time = +(time + current.burst).toFixed(10);
+          current.remaining = 0;
           logCompletion(current);
           completed++;
           remaining.splice(remaining.indexOf(current), 1);
@@ -909,152 +948,154 @@
           time = +(time + p.burst).toFixed(2);
           logCompletion(p);
         }
-      } else if (algo === 'Priority' && isPreemptive) {
+      } else if (algo === 'Priority') {
+        // Lower numeric priority value means higher scheduling priority.
+        const EPS = 1e-9;
+        if (pList.some(p => !Number.isFinite(Number(p.priority)))) {
+          alert('Enter a valid priority for every process.'); return;
+        }
+        pList.forEach(p => { p.priority = Number(p.priority); });
+        const order = (a, b) =>
+          a.priority - b.priority || a.arrival - b.arrival || a.id - b.id;
+        let running = null;
         while (completed < n) {
-          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
-          if (available.length === 0) {
-            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
-            time = +(time + 0.1).toFixed(1);
+          const ready = pList.filter(p => p.arrival <= time + EPS && p.remaining > EPS);
+          if (!ready.length) {
+            const future = pList.filter(p => p.remaining > EPS);
+            if (!future.length) break;
+            const next = Math.min(...future.map(p => p.arrival));
+            recordBlock(null, next - time);
+            time = next;
+            running = null;
             continue;
           }
-          available.sort((a, b) => a.priority - b.priority);
-          const current = available[0];
-          current.remaining = +(current.remaining - 0.1).toFixed(1);
-          time = +(time + 0.1).toFixed(1);
-          const last = ganttLog[ganttLog.length - 1];
-          if (last && last.id === `P${current.id}`) {
-            last.duration = +(last.duration + 0.1).toFixed(1);
-          } else {
-            ganttLog.push({ id: `P${current.id}`, color: current.color, duration: 0.1 });
+          ready.sort((a, b) => {
+            const priorityDifference = a.priority - b.priority;
+            if (priorityDifference !== 0) return priorityDifference;
+            // Avoid needless preemption at equal priority.
+            if (isPreemptive && a === running) return -1;
+            if (isPreemptive && b === running) return 1;
+            return order(a, b);
+          });
+          const current = ready[0];
+          let duration = current.remaining;
+          if (isPreemptive) {
+            const future = pList.filter(p => p.remaining > EPS && p.arrival > time + EPS);
+            const nextArrival = future.length ? Math.min(...future.map(p => p.arrival)) : Infinity;
+            duration = Math.min(duration, nextArrival - time);
           }
-          if (Math.abs(current.remaining) < 1e-9) {
+          if (duration <= EPS) throw new Error('Priority scheduler made no progress');
+          recordBlock(current, duration);
+          time = +(time + duration).toFixed(10);
+          current.remaining = +Math.max(0, current.remaining - duration).toFixed(10);
+          running = current;
+          if (current.remaining <= EPS) {
+            current.remaining = 0;
+            logCompletion(current);
+            completed++;
+            running = null;
+          }
+        }
+      } else if (algo === 'Round Robin') {
+        const EPS = 1e-9;
+        if (!Number.isFinite(quantum) || quantum <= 0) {
+          alert('Enter a positive time quantum for Round Robin.'); return;
+        }
+        const arrivals = [...pList].sort((a, b) => a.arrival - b.arrival || a.id - b.id);
+        const ready = [];
+        let nextIndex = 0;
+        function enqueueArrivals() {
+          while (nextIndex < arrivals.length && arrivals[nextIndex].arrival <= time + EPS) {
+            ready.push(arrivals[nextIndex++]);
+          }
+        }
+        while (completed < n) {
+          enqueueArrivals();
+          if (!ready.length) {
+            const nextTime = arrivals[nextIndex].arrival;
+            recordBlock(null, nextTime - time);
+            time = nextTime;
+            enqueueArrivals();
+          }
+          const current = ready.shift();
+          const duration = Math.min(quantum, current.remaining);
+          recordBlock(current, duration, undefined, false); // Preserve RR quantum boundaries
+          time = +(time + duration).toFixed(10);
+          current.remaining = +Math.max(0, current.remaining - duration).toFixed(10);
+          enqueueArrivals(); // Arrivals precede requeued process
+          if (current.remaining > EPS) ready.push(current);
+          else {
+            current.remaining = 0;
             logCompletion(current);
             completed++;
           }
         }
-      } else if (algo === 'Priority') {
-        while (completed < n) {
-          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
-          if (available.length === 0) {
-            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
-            time = +(time + 0.1).toFixed(1);
-            continue;
-          }
-          available.sort((a, b) => a.priority - b.priority);
-          const current = available[0];
-          time = Math.max(time, current.arrival);
-          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: current.burst });
-          time = +(time + current.burst).toFixed(2);
-          current.remaining = 0;
-          logCompletion(current);
-          completed++;
-        }
-      } else if (algo === 'Round Robin') {
-        if (isNaN(quantum) || quantum <= 0) return alert("Enter valid quantum");
-        const readyQueue = [];
-        let currentTime = 0;
-        let completedRR = 0;
-        const arrived = new Set();
-        while (completedRR < n) {
-          pList.forEach(p => {
-            if (p.arrival <= currentTime && p.remaining > 0 && !arrived.has(p)) {
-              readyQueue.push(p);
-              arrived.add(p);
-            }
-          });
-          if (readyQueue.length === 0) {
-            const nextArrival = Math.min(...pList.filter(p => p.remaining > 0).map(p => p.arrival));
-            if (nextArrival > currentTime) {
-              ganttLog.push({ id: 'Idle', color: '#ccc', duration: nextArrival - currentTime });
-              currentTime = nextArrival;
-            }
-            continue;
-          }
-          const current = readyQueue.shift();
-          if (current.remaining <= 0) continue;
-
-          const slice = Math.min(quantum, current.remaining);
-          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: slice, queue: 0 });
-          current.remaining = +(current.remaining - slice).toFixed(2);
-          currentTime = +(currentTime + slice).toFixed(2);
-          time = currentTime;
-          pList.forEach(p => {
-            if (p.arrival > currentTime - slice && p.arrival <= currentTime && p.remaining > 0 && !arrived.has(p)) {
-              readyQueue.push(p);
-              arrived.add(p);
-            }
-          });
-          if (current.remaining > 0) {
-            readyQueue.push(current);
-          } else {
-            logCompletion(current);
-            completedRR++;
-          }
-        }
-        completed = completedRR;
       } else if (algo === 'Multilevel') {
-        if (isNaN(quantum) || quantum <= 0) return alert("Enter valid quantum for Queue 0");
-        const queue0 = pList.filter(p => p.queueType === 0);
-        const queue1 = pList.filter(p => p.queueType === 1);
-        queue0.forEach(p => { p.remaining = p.burst; });
-        queue1.forEach(p => { p.remaining = p.burst; });
-        let currentTime = 0; let completedML = 0;
-        const totalProcesses = pList.length;
-        const rrQueue = []; const fcfsQueue = []; const fcfsSliceBuffer = [];
-        const getReady = (queue) => queue.filter(p => p.arrival <= currentTime && p.remaining > 0);
-        while (completedML < totalProcesses) {
-          queue0.forEach(p => {
-            if (p.arrival <= currentTime && p.remaining > 0 && !rrQueue.includes(p)) { rrQueue.push(p); }
-          });
-          if (rrQueue.length > 0) {
-            const current = rrQueue.shift();
-            const execTime = Math.min(current.remaining, quantum);
-            ganttLog.push({ id: `P${current.id}`, color: current.color, duration: execTime });
-            current.remaining -= execTime; currentTime += execTime;
-            queue0.forEach(p => {
-              if (p.arrival > currentTime - execTime && p.arrival <= currentTime && p.remaining > 0 && !rrQueue.includes(p)) {
-                rrQueue.push(p);
-              }
-            });
-            if (current.remaining > 0) { rrQueue.push(current); }
-            else {
-              current.completion = currentTime;
-              current.turnaround = +(current.completion - current.arrival).toFixed(2);
-              current.waiting = +(current.turnaround - current.burst).toFixed(2);
-              totalWaiting += current.waiting; totalTurnaround += current.turnaround;
-              table.push(current); completedML++;
-            }
-          } else {
-            const readyQ1 = getReady(queue1);
-            if (fcfsQueue.length === 0 && readyQ1.length > 0) {
-              fcfsQueue.push(...readyQ1.sort((a, b) => a.arrival - b.arrival));
-            }
-            const current = fcfsQueue[0];
-            if (current) {
-              const slice = 1;
-              const execTime = Math.min(current.remaining, slice);
-              fcfsSliceBuffer.push({ id: `P${current.id}`, color: current.color, duration: execTime, queue: 1 });
-              current.remaining -= execTime; currentTime += execTime;
-              const newRR = getReady(queue0);
-              if (newRR.length > 0) continue;
-              if (current.remaining <= 0) {
-                const totalDuration = fcfsSliceBuffer.reduce((sum, s) => sum + s.duration, 0);
-                ganttLog.push({ id: `P${current.id}`, color: current.color, duration: totalDuration, queue: 1 });
-                fcfsSliceBuffer.length = 0;
-                current.completion = currentTime;
-                current.turnaround = +(current.completion - current.arrival).toFixed(2);
-                current.waiting = +(current.turnaround - current.burst).toFixed(2);
-                totalWaiting += current.waiting; totalTurnaround += current.turnaround;
-                table.push(current); fcfsQueue.shift(); completedML++;
-              }
-            } else {
-              ganttLog.push({ id: 'Idle', color: '#ccc', duration: 1 });
-              currentTime += 1;
-            }
+        // Absolute priority: Q0 = Round Robin; Q1 = FCFS, preempted by Q0.
+        const EPS = 1e-9;
+        if (!Number.isFinite(quantum) || quantum <= 0) {
+          alert('Enter a positive time quantum for Queue 0.'); return;
+        }
+        if (pList.some(p => ![0, 1].includes(Number(p.queueType)))) {
+          alert('Every process must belong to Queue 0 or Queue 1.'); return;
+        }
+        const high = pList.filter(p => Number(p.queueType) === 0)
+          .sort((a, b) => a.arrival - b.arrival || a.id - b.id);
+        const low = pList.filter(p => Number(p.queueType) === 1)
+          .sort((a, b) => a.arrival - b.arrival || a.id - b.id);
+        const rrReady = [];
+        let hi = 0, lo = 0;
+        function enqueueHigh() {
+          while (hi < high.length && high[hi].arrival <= time + EPS) {
+            rrReady.push(high[hi++]);
           }
         }
-        completed = completedML;
+        while (completed < n) {
+          enqueueHigh();
+          if (rrReady.length) {
+            const current = rrReady.shift();
+            const duration = Math.min(current.remaining, quantum);
+            recordBlock(current, duration, 0, false);
+            time = +(time + duration).toFixed(10);
+            current.remaining = +Math.max(0, current.remaining - duration).toFixed(10);
+            enqueueHigh();
+            if (current.remaining > EPS) rrReady.push(current);
+            else {
+              current.remaining = 0;
+              logCompletion(current);
+              completed++;
+            }
+          } else if (lo < low.length && low[lo].arrival <= time + EPS) {
+            const current = low[lo];
+            const nextHighArrival = hi < high.length ? high[hi].arrival : Infinity;
+            const duration = Math.min(current.remaining, nextHighArrival - time);
+            if (duration <= EPS) {
+              enqueueHigh();
+              if (!rrReady.length) throw new Error('Multilevel scheduler made no progress');
+              continue;
+            }
+            recordBlock(current, duration, 1, true);
+            time = +(time + duration).toFixed(10);
+            current.remaining = +Math.max(0, current.remaining - duration).toFixed(10);
+            if (current.remaining <= EPS) {
+              current.remaining = 0;
+              logCompletion(current);
+              completed++;
+              lo++;
+            }
+          } else {
+            const nextHigh = hi < high.length ? high[hi].arrival : Infinity;
+            const nextLow = lo < low.length ? low[lo].arrival : Infinity;
+            const nextTime = Math.min(nextHigh, nextLow);
+            if (!Number.isFinite(nextTime)) throw new Error('Unfinished multilevel processes');
+            recordBlock(null, nextTime - time);
+            time = nextTime;
+          }
+        }
+      } else {
+        throw new Error(`Unsupported scheduling algorithm: ${algo}`);
       }
+
 
       const mergedGantt = mergeGanttBlocks(ganttLog, algo);
 
